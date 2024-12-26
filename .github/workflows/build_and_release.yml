@@ -91,12 +91,12 @@ jobs:
       if: matrix.os == 'macos-latest'
       uses: actions/upload-artifact@v4
       with:
-        name: bounceshield-mac
+        name: bounceshield-mac-${{ matrix.target }}
         path: release/mac/bounceshield-${{ matrix.target }}.tar.gz
 
     - name: Upload Linux Binary
       if: matrix.os == 'ubuntu-latest'
       uses: actions/upload-artifact@v4
       with:
-        name: bounceshield-linux
+        name: bounceshield-linux-${{ matrix.target }}
         path: release/linux/bounceshield-linux.tar.gz
