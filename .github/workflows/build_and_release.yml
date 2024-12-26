@@ -21,6 +21,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     permissions:
       contents: write
+      discussions: write
+
     
     steps:
     - name: Checkout code
@@ -91,10 +93,23 @@ jobs:
 
     - name: Create or Update GitHub Release and Upload Assets
       id: create_update_release
-      uses: softprops/action-gh-release@v1
+      uses: softprops/action-gh-release@v2
       with:
         files: |
           release/mac/bounceshield-${{ matrix.target }}.tar.gz,
           release/linux/bounceshield-linux.tar.gz
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+
+    - name: Generate Changelog
+      run: echo "# Good things have arrived" > ${{ github.workspace }}-CHANGELOG.txt
+    - name: Release
+      uses: softprops/action-gh-release@v2
+      if: startsWith(github.ref, 'refs/tags/')
+      with:
+        body_path: ${{ github.workspace }}-CHANGELOG.txt
+        repository: evanschaba/BounceShield
+        # note you'll typically need to create a personal access token
+        # with permissions to create releases in the other repo
+        token: ${{ secrets.GITHUB_TOKEN }}
