@@ -34,7 +34,9 @@ jobs:
         rustup target add x86_64-apple-darwin x86_64-pc-windows-msvc x86_64-unknown-linux-gnu
 
     - name: Build And Release
-      run: cargo build --release --target ${{ matrix.os }}
+      run: |
+        # Build the project for the specified target platform (based on matrix configuration)
+        cargo build --release --target ${{ matrix.os }}
 
     - name: Upload Release Assets
       uses: actions/upload-artifact@v2
