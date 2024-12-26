@@ -3,7 +3,7 @@ name: Build and Release
 on:
   push:
     tags:
-      - 'v*'  # Triggers on version tags (v1.0.0)
+      - 'v*'  # Triggers on version tags (e.g., v1.0.0)
 
 jobs:
   build:
@@ -21,12 +21,15 @@ jobs:
       with:
         toolchain: nightly
 
-    - name: Build And Release
+    - name: Add Targets
       run: |
         rustup target add x86_64-apple-darwin
         rustup target add x86_64-pc-windows-msvc
         rustup target add x86_64-unknown-linux-gnu
-        cargo build --release --target ${{ matrix.os }}
+
+    - name: Build And Release
+      run: |
+        cargo build --release --target ${{ matrix.os }}  # Use the correct matrix target
 
     - name: Upload Release Assets
       uses: softprops/action-gh-release@v1
