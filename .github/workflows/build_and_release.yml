@@ -19,22 +19,28 @@ jobs:
     - name: Set up Rust
       uses: actions-rust-lang/setup-rust-toolchain@v1
       with:
-        toolchain: nightly
+        toolchain: nightly-2021-09-01  # Specify a specific version for consistency
+
+    - name: Cache Rust dependencies
+      uses: actions/cache@v2
+      with:
+        path: ~/.cargo
+        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-cargo-
 
     - name: Add Targets
       run: |
-        rustup target add x86_64-apple-darwin
-        rustup target add x86_64-pc-windows-msvc
-        rustup target add x86_64-unknown-linux-gnu
+        rustup target add x86_64-apple-darwin x86_64-pc-windows-msvc x86_64-unknown-linux-gnu
 
     - name: Build And Release
-      run: |
-        cargo build --release --target ${{ matrix.os }}  # Use the correct matrix target
+      run: cargo build --release --target ${{ matrix.os }}
 
     - name: Upload Release Assets
-      uses: softprops/action-gh-release@v1
+      uses: actions/upload-artifact@v2
       with:
-        files: |
+        name: bounceshield
+        path: |
           target/x86_64-apple-darwin/release/bounceshield
           target/x86_64-pc-windows-msvc/release/bounceshield.exe
           target/x86_64-unknown-linux-gnu/release/bounceshield
