@@ -1,6 +1,6 @@
 # BounceShield
 
-![Test Status](https://github.com/evanschaba/aoc_24/actions/workflows/ci_unit_test.yml/badge.svg)
+![Test Status](https://github.com/evanschaba/BounceShield/actions/workflows/ci_unit_test.yml/badge.svg)
 
 [**Game Details**](docs/game-details.md)
 
