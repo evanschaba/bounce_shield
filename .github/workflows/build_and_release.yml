@@ -53,6 +53,7 @@ jobs:
         export CC=musl-gcc
         export CXX=musl-g++
         cargo build --release --target x86_64-unknown-linux-gnu --verbose
+        ls -la target/x86_64-unknown-linux-gnu/release/
     
     - name: Build for Linux (Ubuntu)
       if: matrix.os == 'ubuntu-latest'
@@ -60,22 +61,30 @@ jobs:
           cargo build --release --target x86_64-unknown-linux-gnu --bin bounceshield --verbose
           ls -la target/x86_64-unknown-linux-gnu/release/
 
-    - name: Package Linux Binary (macOS)
+    - name: Package Binary (macOS)
       if: matrix.os == 'macos-latest'
       run: |
-        mkdir -p release/linux
-        cp target/x86_64-unknown-linux-gnu/release/bounceshield release/linux/bounceshield
-        tar -czf release/linux/bounceshield.tar.gz -C release/linux bounceshield
+        mkdir -p release/mac
+        cp target/x86_64-unknown-linux-gnu/release/bounceshield release/mac/bounceshield
+        tar -czf release/mac/bounceshield-mac.tar.gz -C release/mac bounceshield
 
-    - name: Package Linux Binary (Ubuntu)
+    - name: Package Binary (Ubuntu)
       if: matrix.os == 'ubuntu-latest'
       run: |
         mkdir -p release/linux
-        cp target/x86_64-unknown-linux-gnu/release/Bounceshield release/linux/bounceshield
-        tar -czf release/linux/bounceshield.tar.gz -C release/linux bounceshield
+        cp target/x86_64-unknown-linux-gnu/release/bounceshield release/linux/bounceshield
+        tar -czf release/linux/bounceshield-linux.tar.gz -C release/linux bounceshield
+
+    - name: Upload macOS Binary
+      if: matrix.os == 'macos-latest'
+      uses: actions/upload-artifact@v4
+      with:
+        name: bounceshield-mac
+        path: release/mac/bounceshield-mac.tar.gz
 
     - name: Upload Linux Binary
+      if: matrix.os == 'ubuntu-latest'
       uses: actions/upload-artifact@v4
       with:
         name: bounceshield-linux
-        path: release/linux/bounceshield.tar.gz
+        path: release/linux/bounceshield-linux.tar.gz
