@@ -104,7 +104,9 @@ jobs:
     - name: Read Release Notes
       id: release_notes
       run: |
-        echo "RELEASE_NOTES=$(cat docs/RELEASE.md)" >> $GITHUB_ENV
+        echo "RELEASE_NOTES<<EOF" >> $GITHUB_ENV
+        cat docs/RELEASE.md >> $GITHUB_ENV
+        echo "EOF" >> $GITHUB_ENV
 
     - name: Create Release
       id: create_release
