@@ -22,7 +22,7 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: Set up Rust (nightly)
       uses: actions-rust-lang/setup-rust-toolchain@v1
@@ -87,10 +87,26 @@ jobs:
         cp target/x86_64-unknown-linux-gnu/release/bounceshield release/linux/bounceshield
         tar -czf release/linux/bounceshield-linux.tar.gz -C release/linux bounceshield
 
+    - name: Delete Existing Release
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        release_id=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
+        https://api.github.com/repos/${{ github.repository }}/releases/tags/${{ github.ref_name }} | jq -r .id)
+        if [ "$release_id" != "null" ]; then
+          curl -s -X DELETE -H "Authorization: token $GITHUB_TOKEN" \
+          https://api.github.com/repos/${{ github.repository }}/releases/$release_id
+        fi
+
+        tag_name=${GITHUB_REF#refs/tags/}
+        curl -s -X DELETE -H "Authorization: token $GITHUB_TOKEN" \
+        https://api.github.com/repos/${{ github.repository }}/git/refs/tags/$tag_name
+
     - name: Create GitHub Release
       id: create_release
       uses: ncipollo/release-action@v1
       with:
+        token: ${{ secrets.GITHUB_TOKEN }}
         tag: ${{ github.ref }}
         name: Release ${{ github.ref }}
         bodyFile: "docs/RELEASE.md"
