@@ -57,7 +57,7 @@ jobs:
     - name: Build for Linux (Ubuntu)
       if: matrix.os == 'ubuntu-latest'
       run: |
-        cargo build --release --target x86_64-unknown-linux-gnu --verbose
+          cargo build --release --target x86_64-unknown-linux-gnu --bin BounceShield --verbose
 
     - name: Package Linux Binary (macOS)
       if: matrix.os == 'macos-latest'
@@ -70,7 +70,7 @@ jobs:
       if: matrix.os == 'ubuntu-latest'
       run: |
         mkdir -p release/linux
-        cp target/x86_64-unknown-linux-gnu/release/bounceshield release/linux/BounceShield
+        cp target/x86_64-unknown-linux-gnu/release/Bounceshield release/linux/BounceShield
         tar -czf release/linux/BounceShield.tar.gz -C release/linux BounceShield
 
     - name: Upload Linux Binary
