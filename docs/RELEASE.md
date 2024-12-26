@@ -1,8 +1,5 @@
 # BounceShield v1.0.0
 
-![Test Status](https://github.com/evanschaba/BounceShield/actions/workflows/ci_unit_test.yml/badge.svg)
---
-
 **Full Changelog**: https://github.com/evanschaba/BounceShield/commits/v1.0.0
 
 ### Overview
