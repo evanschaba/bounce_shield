@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]  #windows-latest
+        os: [ubuntu-latest, macos-latest]  # Adjust target platforms here
 
     steps:
     - name: Checkout code
@@ -32,18 +32,18 @@ jobs:
     - name: Add Targets
       run: |
         rustup target add x86_64-apple-darwin x86_64-unknown-linux-gnu
-#       x86_64-pc-windows-msvc
+        # Add Windows target if needed, like: rustup target add x86_64-pc-windows-msvc
 
     - name: Build And Release
       run: |
         # Build the project for the specified target platform (based on matrix configuration)
-        cargo build --release --target ${{ matrix.os }}
+        cargo build --release --target ${{ matrix.os == 'ubuntu-latest' && 'x86_64-unknown-linux-gnu' || 'x86_64-apple-darwin' }}
 
     - name: Upload Release Assets
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v4  # Updated to v4
       with:
         name: bounceshield
         path: |
           target/x86_64-apple-darwin/release/bounceshield
           target/x86_64-unknown-linux-gnu/release/bounceshield
-#         target/x86_64-pc-windows-msvc/release/bounceshield.exe
+        # target/x86_64-pc-windows-msvc/release/bounceshield.exe (if Windows is included)
