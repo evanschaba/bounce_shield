@@ -87,7 +87,7 @@ jobs:
         cp target/x86_64-unknown-linux-gnu/release/bounceshield release/linux/bounceshield
         tar -czf release/linux/bounceshield-linux.tar.gz -C release/linux bounceshield
 
-    - name: Delete Existing Release
+    - name: Delete Existing Release and Tag
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
@@ -97,6 +97,10 @@ jobs:
           curl -s -X DELETE -H "Authorization: token $GITHUB_TOKEN" \
           https://api.github.com/repos/${{ github.repository }}/releases/$release_id
         fi
+
+        tag_name=${GITHUB_REF#refs/tags/}
+        curl -s -X DELETE -H "Authorization: token $GITHUB_TOKEN" \
+        https://api.github.com/repos/${{ github.repository }}/git/refs/tags/$tag_name
 
     - name: Create Release
       id: create_release
