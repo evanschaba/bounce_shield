@@ -23,7 +23,6 @@ jobs:
       contents: write
       discussions: write
 
-    
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
@@ -109,6 +108,4 @@ jobs:
       with:
         body_path: ${{ github.workspace }}/docs/README.md
         repository: evanschaba/BounceShield
-        # note you'll typically need to create a personal access token
-        # with permissions to create releases in the other repo
         token: ${{ secrets.GITHUB_TOKEN }}
