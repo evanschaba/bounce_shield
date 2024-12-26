@@ -9,8 +9,8 @@ jobs:
   build:
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]  # Two separate jobs: one for Linux and one for macOS
-    runs-on: ${{ matrix.os }}  # Dynamically choose runner based on the matrix configuration
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
     
     steps:
     - name: Checkout code
@@ -19,7 +19,7 @@ jobs:
     - name: Set up Rust
       uses: actions-rust-lang/setup-rust-toolchain@v1
       with:
-        toolchain: nightly  # Specify a specific version for consistency
+        toolchain: nightly
 
     - name: Cache Rust dependencies
       uses: actions/cache@v2
@@ -32,7 +32,6 @@ jobs:
     - name: Add Targets
       run: |
         rustup target add x86_64-apple-darwin x86_64-unknown-linux-gnu
-        # Add Windows target if needed, like: rustup target add x86_64-pc-windows-msvc
 
     - name: Build for Linux
       if: matrix.os == 'ubuntu-latest'
@@ -44,30 +43,30 @@ jobs:
       run: |
         cargo build --release --target x86_64-apple-darwin
 
-    - name: Create Linux Release Package
+    - name: Package Linux Binary
       if: matrix.os == 'ubuntu-latest'
       run: |
         mkdir -p release/linux
-        cp target/x86_64-unknown-linux-gnu/release/bounceshield release/linux/bounceshield
-        tar -czf release/linux/bounceshield.tar.gz -C release/linux bounceshield
+        cp target/x86_64-unknown-linux-gnu/release/bounceshield release/linux/BounceShield
+        tar -czf release/linux/BounceShield.tar.gz -C release/linux BounceShield
 
-    - name: Create macOS Release Package
+    - name: Package macOS Binary
       if: matrix.os == 'macos-latest'
       run: |
         mkdir -p release/macos
-        cp target/x86_64-apple-darwin/release/bounceshield release/macos/bounceshield
-        tar -czf release/macos/bounceshield.tar.gz -C release/macos bounceshield
+        cp target/x86_64-apple-darwin/release/bounceshield release/macos/BounceShield
+        tar -czf release/macos/BounceShield.tar.gz -C release/macos BounceShield
 
-    - name: Upload Linux Release Assets
+    - name: Upload Linux Binary
       if: matrix.os == 'ubuntu-latest'
       uses: actions/upload-artifact@v4
       with:
-        name: linux-binaries
-        path: release/linux/bounceshield.tar.gz
+        name: BounceShield-linux
+        path: release/linux/BounceShield.tar.gz
 
-    - name: Upload macOS Release Assets
+    - name: Upload macOS Binary
       if: matrix.os == 'macos-latest'
       uses: actions/upload-artifact@v4
       with:
-        name: macos-binaries
-        path: release/macos/bounceshield.tar.gz
+        name: BounceShield-macos
+        path: release/macos/BounceShield.tar.gz
