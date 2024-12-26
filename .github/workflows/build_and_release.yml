@@ -39,13 +39,13 @@ jobs:
         rustup target add x86_64-apple-darwin
         rustup target add aarch64-apple-darwin
 
-    # - name: Cache Rust dependencies
-    #   uses: actions/cache@v3
-    #   with:
-    #     path: ~/.cargo
-    #     key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-    #     restore-keys: |
-    #       ${{ runner.os }}-cargo-
+    - name: Cache Rust dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cargo
+        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-cargo-
 
     - name: Install Cross-Compilation Tools (Ubuntu)
       if: matrix.os == 'ubuntu-latest'
@@ -112,5 +112,29 @@ jobs:
         bodyFile: "docs/RELEASE.md"
         draft: false
         prerelease: false
-        artifacts: release/mac/bounceshield-${{ matrix.target }}.tar.gz,release/linux/bounceshield-linux.tar.gz
+
+    - name: Upload macOS Release Asset
+      if: matrix.os == 'macos-latest'
+      uses: ncipollo/release-action@v1
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        tag: ${{ github.ref }}
+        name: Release ${{ github.ref }}
+        bodyFile: "docs/RELEASE.md"
+        draft: false
+        prerelease: false
+        artifacts: release/mac/bounceshield-${{ matrix.target }}.tar.gz
+        artifactContentType: application/gzip
+
+    - name: Upload Linux Release Asset
+      if: matrix.os == 'ubuntu-latest'
+      uses: ncipollo/release-action@v1
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        tag: ${{ github.ref }}
+        name: Release ${{ github.ref }}
+        bodyFile: "docs/RELEASE.md"
+        draft: false
+        prerelease: false
+        artifacts: release/linux/bounceshield-linux.tar.gz
         artifactContentType: application/gzip
