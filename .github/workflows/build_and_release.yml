@@ -87,37 +87,14 @@ jobs:
         cp target/x86_64-unknown-linux-gnu/release/bounceshield release/linux/bounceshield
         tar -czf release/linux/bounceshield-linux.tar.gz -C release/linux bounceshield
 
-    - name: Upload macOS Binary
-      if: matrix.os == 'macos-latest'
-      uses: actions/upload-artifact@v4
-      with:
-        name: bounceshield-mac-${{ matrix.target }}
-        path: release/mac/bounceshield-${{ matrix.target }}.tar.gz
-
-    - name: Upload Linux Binary
-      if: matrix.os == 'ubuntu-latest'
-      uses: actions/upload-artifact@v4
-      with:
-        name: bounceshield-linux-${{ matrix.target }}
-        path: release/linux/bounceshield-linux.tar.gz
-
-    - name: Read Release Notes
-      id: release_notes
-      run: |
-        echo "RELEASE_NOTES<<EOF" >> $GITHUB_ENV
-        cat docs/RELEASE.md >> $GITHUB_ENV
-        echo "EOF" >> $GITHUB_ENV
-
     - name: Create Release
       id: create_release
       uses: actions/create-release@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        RELEASE_NOTES: ${{ env.RELEASE_NOTES }}
       with:
         tag_name: ${{ github.ref }}
         release_name: Release ${{ github.ref }}
-        body: ${{ env.RELEASE_NOTES }}
         draft: false
         prerelease: false
 
