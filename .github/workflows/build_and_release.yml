@@ -24,7 +24,7 @@ jobs:
     - name: Install Target for cross-compiling
       run: |
         rustup target add x86_64-unknown-linux-gnu
-        rustup target add x86_64-linux-musl  # If you want to use musl
+        rustup target add x86_64-linux-musl
 
     - name: Cache Rust dependencies
       uses: actions/cache@v2
@@ -38,7 +38,7 @@ jobs:
       if: matrix.os == 'ubuntu-latest'
       run: |
         sudo apt-get update
-        sudo apt-get install -y gcc-multilib g++-multilib
+        sudo apt-get install -y gcc-multilib g++-multilib musl-tools
 
     - name: Install Cross-Compilation Tools (macOS)
       if: matrix.os == 'macos-latest'
@@ -51,10 +51,8 @@ jobs:
     - name: Build for Linux (macOS)
       if: matrix.os == 'macos-latest'
       run: |
-        # Set CC and CXX to musl-gcc for cross-compiling
         export CC=musl-gcc
         export CXX=musl-g++
-        # Use correct target and build flags
         cargo build --release --target x86_64-unknown-linux-gnu --verbose || cargo build --release --target x86_64-linux-musl --verbose
     
     - name: Build for Linux (Ubuntu)
