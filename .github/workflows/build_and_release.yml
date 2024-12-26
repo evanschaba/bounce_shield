@@ -89,29 +89,12 @@ jobs:
 
     - name: Create GitHub Release
       id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      uses: ncipollo/release-action@v1
       with:
-        tag_name: ${{ github.ref }}
-        release_name: Release ${{ github.ref }}
+        tag: ${{ github.ref }}
+        name: Release ${{ github.ref }}
+        bodyFile: "docs/RELEASE.md"
         draft: false
         prerelease: false
-
-    - name: Upload macOS Release Asset
-      if: matrix.os == 'macos-latest'
-      uses: actions/upload-release-asset@v1
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: release/mac/bounceshield-${{ matrix.target }}.tar.gz
-        asset_name: bounceshield-mac-${{ matrix.target }}.tar.gz
-        asset_content_type: application/gzip
-
-    - name: Upload Linux Release Asset
-      if: matrix.os == 'ubuntu-latest'
-      uses: actions/upload-release-asset@v1
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: release/linux/bounceshield-linux.tar.gz
-        asset_name: bounceshield-linux.tar.gz
-        asset_content_type: application/gzip
+        artifacts: release/mac/bounceshield-${{ matrix.target }}.tar.gz,release/linux/bounceshield-linux.tar.gz
+        artifactContentType: application/gzip
