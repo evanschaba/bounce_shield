@@ -104,17 +104,18 @@ jobs:
     - name: Read Release Notes
       id: release_notes
       run: |
-        echo "::set-output name=notes::$(cat docs/RELEASE.md)"
+        echo "RELEASE_NOTES=$(cat docs/RELEASE.md)" >> $GITHUB_ENV
 
     - name: Create Release
       id: create_release
       uses: actions/create-release@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        RELEASE_NOTES: ${{ env.RELEASE_NOTES }}
       with:
         tag_name: ${{ github.ref }}
         release_name: Release ${{ github.ref }}
-        body: ${{ steps.release_notes.outputs.notes }}
+        body: ${{ env.RELEASE_NOTES }}
         draft: false
         prerelease: false
 
