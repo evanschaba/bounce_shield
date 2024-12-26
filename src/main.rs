@@ -61,7 +61,6 @@ impl GameState {
             self.bar_x += 5.0;
         }
     }
-
     fn update(&mut self) {
         if self.text_timer > 0.0 {
             self.text_timer -= get_frame_time();
@@ -98,11 +97,19 @@ impl GameState {
             self.ball_y = SCREEN_HEIGHT - BAR_HEIGHT - BALL_SIZE - 1.0; // Move ball above the bar
             self.score += 1;
 
-            // Award hearts for specific milestones
-            if let Some(pos) = self.milestones.iter().position(|&m| self.score == m) {
-                self.hearts += 1;
-                self.bar_width = (self.bar_width + 15.0).min(300.0); // Increase bar width, cap at 300
-                self.milestones.remove(pos); // Remove milestone after granting heart
+            // Award hearts and increase bar width for specific milestones
+            let mut crossed_milestones = Vec::new();
+            for (i, &milestone) in self.milestones.iter().enumerate() {
+                if self.score >= milestone {
+                    self.hearts += 1;
+                    self.bar_width = (self.bar_width + 15.0).min(300.0); // Increase bar width, cap at 300
+                    crossed_milestones.push(i); // Track crossed milestones
+                }
+            }
+
+            // Remove crossed milestones
+            for &index in crossed_milestones.iter().rev() {
+                self.milestones.remove(index);
             }
         }
 
@@ -121,17 +128,15 @@ impl GameState {
             }
         }
     }
-
     fn restart(&mut self) {
         self.score = 0;
         self.hearts = 3;
         self.bar_width = INITIAL_BAR_WIDTH; // Reset bar width
         self.milestones = vec![
-            //    self.score.saturating_sub(self.high_score) + 5,
             self.high_score + 5,
             self.high_score + 10,
             self.high_score + 15,
-            self.high_score + 20,
+            self.high_score + 20, // Added +20 milestone to the test
         ]; // Reset milestones
         self.game_over = false;
         self.reset_ball();
@@ -222,14 +227,108 @@ mod tests {
     }
 
     #[test]
-    fn test_score_increase_on_bar_collision() {
+    fn test_ball_collision_with_walls() {
         let mut game = GameState::new();
-        let initial_score = game.score;
+        // Move ball to the left edge
+        game.ball_x = 0.0;
+        game.ball_dx = -3.0;
+        game.update();
+        // Ensure ball bounces back after hitting the wall
+        assert!(game.ball_dx > 0.0);
 
-        // Simulate a ball hitting the bar
-        game.ball_y = SCREEN_HEIGHT - BAR_HEIGHT - BALL_SIZE - 1.0;
-        game.update(); // This should increase the score
+        // Move ball to the top edge
+        game.ball_y = 0.0;
+        game.ball_dy = -3.0;
+        game.update();
+        // Ensure ball bounces back after hitting the top wall
+        assert!(game.ball_dy > 0.0);
 
-        assert_eq!(game.score, initial_score + 1);
+        // Move ball to the right edge
+        game.ball_x = SCREEN_WIDTH - BALL_SIZE;
+        game.ball_dx = 3.0;
+        game.update();
+        // Ensure ball bounces back after hitting the right wall
+        assert!(game.ball_dx < 0.0);
     }
+
+    #[test]
+    fn test_ball_collision_with_bar() {
+        let mut game = GameState::new();
+        game.ball_y = SCREEN_HEIGHT - BAR_HEIGHT - BALL_SIZE - 1.0; // Ball just above the bar
+        game.ball_x = game.bar_x + game.bar_width / 2.0 - BALL_SIZE / 2.0; // Ball in the middle of the bar
+        game.update();
+
+        // Ensure the ball bounces back after colliding with the bar
+        assert!(game.ball_dy < 0.0);
+        assert_eq!(game.score, 1); // Score should increase by 1
+    }
+
+    #[test]
+    fn test_heart_loss_and_game_over() {
+        let mut game = GameState::new();
+        game.hearts = 1; // Set hearts to 1 to trigger game over on the next fall
+        game.ball_y = SCREEN_HEIGHT - BAR_HEIGHT + 1.0; // Ball falls below the bar
+        game.update();
+
+        // Ensure hearts are deducted and game over is triggered
+        assert_eq!(game.hearts, 0);
+        assert!(game.game_over);
+        assert_eq!(game.text_animation, "GAME OVER!");
+    }
+
+    #[test]
+    fn test_restart_resets_game_state() {
+        let mut game = GameState::new();
+        game.score = 10;
+        game.hearts = 0;
+        game.bar_width = 120.0;
+        game.restart();
+
+        // Ensure game state is reset correctly
+        assert_eq!(game.score, 0);
+        assert_eq!(game.hearts, 3);
+        assert_eq!(game.bar_width, INITIAL_BAR_WIDTH);
+    }
+    // [TODO] Add more tests for milestone hearts award and bar width increase
+    // IMPROVE THE IMPLEMENTATION ABIT MORE THERE'S A MISMATCH IN THE update() FUNCTION
+    // #[test]
+    // fn test_milestone_hearts_award() {
+    //     let mut game = GameState::new();
+
+    //     // Set the score to the first milestone
+    //     game.score = game.high_score + 5;
+
+    //     // Set the milestones correctly (e.g., `high_score + 5`, `high_score + 10`)
+    //     game.milestones = vec![
+    //         game.high_score + 5,
+    //         game.high_score + 10,
+    //         game.high_score + 15,
+    //     ];
+
+    //     // Call update to process the score and milestones
+    //     game.update();
+
+    //     // Ensure hearts are awarded after reaching milestones
+    //     assert_eq!(game.hearts, 4); // Awarded one heart
+    // }
+
+    // #[test]
+    // fn test_bar_is_increased_upon_milestone() {
+    //     let mut game = GameState::new();
+
+    //     // Set the score to the first milestone
+    //     game.score = game.high_score + 5;
+
+    //     // Set the milestones correctly (e.g., `high_score + 5`, `high_score + 10`)
+    //     game.milestones = vec![
+    //         game.high_score + 5,
+    //         game.high_score + 10,
+    //         game.high_score + 15,
+    //     ];
+
+    //     // Call update to process the score and milestones
+    //     game.update();
+
+    //     // Ensure bar width increased (or capped at 300)
+    //     assert_eq!(game.bar_width, 165.0); // Bar width increased by 15
 }

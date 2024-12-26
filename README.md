@@ -1,5 +1,7 @@
 # BounceShield
 
+![Test Status](https://github.com/evanschaba/aoc_24/actions/workflows/ci_unit_test.yml/badge.svg)
+
 [**Game Details**](docs/game-details.md)
 
 ## Problem Decomposition
@@ -26,14 +28,14 @@ The task is to create a simple ball-and-bar game where the player controls a bar
 
 ### Screenshots
 
-![Game Screenshot 1](docs/assets/screenshots/game_start.png)
-*The "Game Start".*
+***The "Game Start".***
+![game start](docs/assets/screenshots/game_start.png)
 
-![Game Screenshot 2](docs/assets/screenshots/game_over.png)
-*The "Game Over" screen after losing all hearts.*
+***The "Game Over" screen after losing all hearts.***
+![game over](docs/assets/screenshots/game_over.png)
 
-![Game Screenshot 3](docs/assets/screenshots/game_retry.png)
-*The "Game Retry" screen after recording highscore.*
+***The "Game Retry" screen after recording highscore.***
+![game retry](docs/assets/screenshots/game_retry.png)
 
 ### Planned Features
 
@@ -70,6 +72,9 @@ The task is to create a simple ball-and-bar game where the player controls a bar
 
 ## License
 
-© 2024 Evans Chaba. All rights reserved.
 
 This game is open-source and released under the MIT License. See [LICENSE](LICENSE) for more details.
+
+**© 2024 Evans Chaba. All rights reserved.**
+
+--
