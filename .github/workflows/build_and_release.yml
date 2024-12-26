@@ -33,6 +33,9 @@ jobs:
       run: |
         rustup target add x86_64-apple-darwin x86_64-unknown-linux-gnu
 
+    - name: Clean previous build artifacts
+      run: cargo clean  # Clean out previous builds
+
     - name: Build for Linux
       if: matrix.os == 'ubuntu-latest'
       run: |
@@ -47,14 +50,18 @@ jobs:
       if: matrix.os == 'ubuntu-latest'
       run: |
         mkdir -p release/linux
+        # Only include the binary, not the source code
         cp target/x86_64-unknown-linux-gnu/release/bounceshield release/linux/BounceShield
+        # Package the binary in a tarball
         tar -czf release/linux/BounceShield.tar.gz -C release/linux BounceShield
 
     - name: Package macOS Binary
       if: matrix.os == 'macos-latest'
       run: |
         mkdir -p release/macos
+        # Only include the binary, not the source code
         cp target/x86_64-apple-darwin/release/bounceshield release/macos/BounceShield
+        # Package the binary in a tarball
         tar -czf release/macos/BounceShield.tar.gz -C release/macos BounceShield
 
     - name: Upload Linux Binary
