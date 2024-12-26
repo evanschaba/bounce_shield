@@ -89,10 +89,10 @@ jobs:
 
     - name: Delete Existing Release
       run: |
-        release_id=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+        release_id=$(curl -s -H "Authorization: token ${{ secrets.TOKEN }}" \
         https://api.github.com/repos/${{ github.repository }}/releases/tags/${{ github.ref_name }} | jq -r .id)
         if [ "$release_id" != "null" ]; then
-          curl -s -X DELETE -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+          curl -s -X DELETE -H "Authorization: token ${{ secrets.TOKEN }}" \
           https://api.github.com/repos/${{ github.repository }}/releases/$release_id
         fi
 
@@ -100,7 +100,7 @@ jobs:
       id: create_release
       uses: actions/create-release@v1
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.TOKEN }}
       with:
         tag_name: ${{ github.ref }}
         release_name: Release ${{ github.ref }}
