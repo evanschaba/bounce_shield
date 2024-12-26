@@ -19,7 +19,7 @@ jobs:
     - name: Set up Rust
       uses: actions-rust-lang/setup-rust-toolchain@v1
       with:
-        toolchain: nightly-2021-09-01  # Specify a specific version for consistency
+        toolchain: nightly  # Specify a specific version for consistency
 
     - name: Cache Rust dependencies
       uses: actions/cache@v2
