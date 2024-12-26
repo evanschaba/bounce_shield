@@ -3,7 +3,7 @@ name: Build and Release
 on:
   push:
     tags:
-      - 'v*'  # Triggers on version tags (e.g., v1.0.0)
+      - 'v*'
 
 jobs:
   build:
@@ -16,10 +16,15 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v2
 
-    - name: Set up Rust
+    - name: Set up Rust (nightly)
       uses: actions-rust-lang/setup-rust-toolchain@v1
       with:
         toolchain: nightly
+
+    - name: Install Target for cross-compiling
+      run: |
+        rustup target add x86_64-unknown-linux-gnu
+        rustup target add x86_64-linux-musl  # If you want to use musl
 
     - name: Cache Rust dependencies
       uses: actions/cache@v2
@@ -29,51 +34,52 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-cargo-
 
-    - name: Add Targets
-      run: |
-        rustup target add x86_64-apple-darwin x86_64-unknown-linux-gnu
-
-    - name: Clean previous build artifacts
-      run: cargo clean  # Clean out previous builds
-
-    - name: Build for Linux
+    - name: Install Cross-Compilation Tools (Ubuntu)
       if: matrix.os == 'ubuntu-latest'
       run: |
-        cargo build --release --target x86_64-unknown-linux-gnu
+        sudo apt-get update
+        sudo apt-get install -y gcc-multilib g++-multilib
 
-    - name: Build for macOS
+    - name: Install Cross-Compilation Tools (macOS)
       if: matrix.os == 'macos-latest'
       run: |
-        cargo build --release --target x86_64-apple-darwin
+        brew install FiloSottile/musl-cross/musl-cross
 
-    - name: Package Linux Binary
+    - name: Clean previous build artifacts
+      run: cargo clean
+
+    - name: Build for Linux (macOS)
+      if: matrix.os == 'macos-latest'
+      run: |
+        # Set CC and CXX to musl-gcc for cross-compiling
+        export CC=musl-gcc
+        export CXX=musl-g++
+        # Use correct target and build flags
+        cargo build --release --target x86_64-unknown-linux-gnu --verbose || cargo build --release --target x86_64-linux-musl --verbose
+    
+    - name: Build for Linux (Ubuntu)
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y gcc-multilib g++-multilib
+        cargo build --release --target x86_64-unknown-linux-gnu --verbose
+    
+    - name: Package Linux Binary (macOS)
+      if: matrix.os == 'macos-latest'
+      run: |
+        mkdir -p release/linux
+        cp target/x86_64-unknown-linux-gnu/release/bounceshield release/linux/BounceShield
+        tar -czf release/linux/BounceShield.tar.gz -C release/linux BounceShield
+
+    - name: Package Linux Binary (Ubuntu)
       if: matrix.os == 'ubuntu-latest'
       run: |
         mkdir -p release/linux
-        # Only include the binary, not the source code
         cp target/x86_64-unknown-linux-gnu/release/bounceshield release/linux/BounceShield
-        # Package the binary in a tarball
         tar -czf release/linux/BounceShield.tar.gz -C release/linux BounceShield
 
-    - name: Package macOS Binary
-      if: matrix.os == 'macos-latest'
-      run: |
-        mkdir -p release/macos
-        # Only include the binary, not the source code
-        cp target/x86_64-apple-darwin/release/bounceshield release/macos/BounceShield
-        # Package the binary in a tarball
-        tar -czf release/macos/BounceShield.tar.gz -C release/macos BounceShield
-
     - name: Upload Linux Binary
-      if: matrix.os == 'ubuntu-latest'
       uses: actions/upload-artifact@v4
       with:
         name: BounceShield-linux
         path: release/linux/BounceShield.tar.gz
-
-    - name: Upload macOS Binary
-      if: matrix.os == 'macos-latest'
-      uses: actions/upload-artifact@v4
-      with:
-        name: BounceShield-macos
-        path: release/macos/BounceShield.tar.gz

@@ -6,3 +6,6 @@ edition = "2024"
 [dependencies]
 rand = "0.8.5"
 macroquad = "0.4.13"
+
+[target.x86_64-unknown-linux-gnu]
+linker = "/opt/homebrew/Cellar/musl-cross/0.9.9_2/bin/x86_64-linux-musl-gcc"
