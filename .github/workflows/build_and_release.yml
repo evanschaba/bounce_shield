@@ -1,4 +1,4 @@
-name: Build and Release
+name: Build and Upload Release Assets
 
 on:
   push:
@@ -19,7 +19,7 @@ jobs:
           - os: macos-latest
             target: x86_64-unknown-linux-gnu
     runs-on: ${{ matrix.os }}
-    
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
@@ -32,10 +32,10 @@ jobs:
     - name: Install Target for cross-compiling (Ubuntu)
       if: matrix.os == 'ubuntu-latest'
       run: rustup target add x86_64-unknown-linux-gnu
-      
+
     - name: Install Target for cross-compiling (macOS)
       if: matrix.os == 'macos-latest'
-      run: | 
+      run: |
         rustup target add x86_64-apple-darwin
         rustup target add aarch64-apple-darwin
 
@@ -66,13 +66,13 @@ jobs:
       run: |
         cargo build --release --target ${{ matrix.target }} --verbose
         ls -la target/${{ matrix.target }}/release/
-    
+
     - name: Build for Linux (Ubuntu)
       if: matrix.os == 'ubuntu-latest'
       run: |
         cargo build --release --target x86_64-unknown-linux-gnu --bin bounceshield --verbose
         ls -la target/x86_64-unknown-linux-gnu/release/
-        
+
     - name: Package Binary (macOS)
       if: matrix.os == 'macos-latest'
       run: |
@@ -87,22 +87,7 @@ jobs:
         cp target/x86_64-unknown-linux-gnu/release/bounceshield release/linux/bounceshield
         tar -czf release/linux/bounceshield-linux.tar.gz -C release/linux bounceshield
 
-    - name: Delete Existing Release and Tag
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: |
-        release_id=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
-        https://api.github.com/repos/${{ github.repository }}/releases/tags/${{ github.ref_name }} | jq -r .id)
-        if [ "$release_id" != "null" ]; then
-          curl -s -X DELETE -H "Authorization: token $GITHUB_TOKEN" \
-          https://api.github.com/repos/${{ github.repository }}/releases/$release_id
-        fi
-
-        tag_name=${GITHUB_REF#refs/tags/}
-        curl -s -X DELETE -H "Authorization: token $GITHUB_TOKEN" \
-        https://api.github.com/repos/${{ github.repository }}/git/refs/tags/$tag_name
-
-    - name: Create Release
+    - name: Create GitHub Release
       id: create_release
       uses: actions/create-release@v1
       env:
