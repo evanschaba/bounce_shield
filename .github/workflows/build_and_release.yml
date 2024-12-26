@@ -112,6 +112,8 @@ jobs:
         bodyFile: "docs/RELEASE.md"
         draft: false
         prerelease: false
+        replacesArtifacts: true
+        updateOnlyUnreleased: true
 
     - name: Upload macOS Release Asset
       if: matrix.os == 'macos-latest'
@@ -125,7 +127,9 @@ jobs:
         prerelease: false
         artifacts: release/mac/bounceshield-${{ matrix.target }}.tar.gz
         artifactContentType: application/gzip
-
+        replacesArtifacts: true
+        updateOnlyUnreleased: true
+        
     - name: Upload Linux Release Asset
       if: matrix.os == 'ubuntu-latest'
       uses: ncipollo/release-action@v1
@@ -138,3 +142,5 @@ jobs:
         prerelease: false
         artifacts: release/linux/bounceshield-linux.tar.gz
         artifactContentType: application/gzip
+        replacesArtifacts: true
+        updateOnlyUnreleased: true
