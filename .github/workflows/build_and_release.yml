@@ -7,11 +7,11 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]  # Adjust target platforms here
-
+        os: [ubuntu-latest, macos-latest]  # Two separate jobs: one for Linux and one for macOS
+    runs-on: ${{ matrix.os }}  # Dynamically choose runner based on the matrix configuration
+    
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
