@@ -1,0 +1,40 @@
+name: "CI unit test"
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    name: cargo test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Set up the Rust toolchain to use nightly for all components
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: nightly
+          # profile: minimal
+          # component: rustfmt
+
+      # Install rustfmt for the nightly toolchain
+      - run: rustup component add rustfmt --toolchain nightly
+
+      # Install Clippy for the nightly toolchain
+      - run: rustup component add clippy --toolchain nightly
+
+      # Run Clippy to check for linting issues with nightly toolchain
+      - name: Run Clippy
+        run: cargo +nightly clippy --workspace --all-features -- -D warnings
+
+      # Run Rustfmt to check if code is properly formatted with nightly toolchain
+      - name: Run Rustfmt
+        run: cargo +nightly fmt -- --check
+
+      # Run the tests for all features with nightly toolchain
+      #- run: cargo +nightly test --all-features
+
+      # Run tests for each project (with --nocapture to see the output)
+      - name: Run tests for each project
+        run: cargo +nightly test --workspace --all-features -- --nocapture
