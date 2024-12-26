@@ -109,6 +109,6 @@ jobs:
         files: | 
           release/mac/bounceshield-${{ matrix.target }}.tar.gz,
           release/linux/bounceshield-linux.tar.gz
-          body_path: docs/RELEASE.md
-          env:
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        body_path: docs/RELEASE.md
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
