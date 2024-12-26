@@ -40,7 +40,7 @@ jobs:
         rustup target add aarch64-apple-darwin
 
     - name: Cache Rust dependencies
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       with:
         path: ~/.cargo
         key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
@@ -98,5 +98,5 @@ jobs:
       if: matrix.os == 'ubuntu-latest'
       uses: actions/upload-artifact@v4
       with:
-        name: bounceshield-linux-${{ matrix.target }}
+        name: bounceshield-linux
         path: release/linux/bounceshield-linux.tar.gz
