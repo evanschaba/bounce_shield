@@ -102,4 +102,5 @@ jobs:
           release/linux/bounceshield-linux.tar.gz
         artifactContentType: application/gzip
         replacesArtifacts: true
+        removeArtifacts: true
         updateOnlyUnreleased: true
