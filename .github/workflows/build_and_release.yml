@@ -44,11 +44,22 @@ jobs:
       run: |
         cargo build --release --target x86_64-apple-darwin
 
-    - name: Upload Release Assets
-      uses: actions/upload-artifact@v4  # Updated to v4
+    - name: Upload Linux Release Assets
+      if: matrix.os == 'ubuntu-latest'
+      uses: actions/upload-artifact@v4
       with:
-        name: bounceshield
-        path: |
-          target/x86_64-apple-darwin/release/bounceshield
-          target/x86_64-unknown-linux-gnu/release/bounceshield
-        # target/x86_64-pc-windows-msvc/release/bounceshield.exe (if Windows is included)
+        name: linux-binaries
+        path: target/x86_64-unknown-linux-gnu/release/bounceshield
+
+    - name: Upload macOS Release Assets
+      if: matrix.os == 'macos-latest'
+      uses: actions/upload-artifact@v4
+      with:
+        name: macos-binaries
+        path: target/x86_64-apple-darwin/release/bounceshield
+
+    - name: Upload Source Code as Backup
+      uses: actions/upload-artifact@v4
+      with:
+        name: source-code
+        path: .  # This will upload the entire repository
