@@ -1,4 +1,4 @@
-name: Build and Release
+name: CI release
 
 on:
   push:
@@ -98,5 +98,40 @@ jobs:
       if: matrix.os == 'ubuntu-latest'
       uses: actions/upload-artifact@v4
       with:
-        name: bounceshield-linux
+        name: bounceshield-linux-${{ matrix.target }}
         path: release/linux/bounceshield-linux.tar.gz
+
+    - name: Read Release Notes
+      id: release_notes
+      run: |
+        echo "::set-output name=notes::$(cat docs/RELEASE.md)"
+
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ github.ref }}
+        body: ${{ steps.release_notes.outputs.notes }}
+        draft: false
+        prerelease: false
+
+    - name: Upload macOS Release Asset
+      if: matrix.os == 'macos-latest'
+      uses: actions/upload-release-asset@v1
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: release/mac/bounceshield-${{ matrix.target }}.tar.gz
+        asset_name: bounceshield-mac-${{ matrix.target }}.tar.gz
+        asset_content_type: application/gzip
+
+    - name: Upload Linux Release Asset
+      if: matrix.os == 'ubuntu-latest'
+      uses: actions/upload-release-asset@v1
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: release/linux/bounceshield-linux.tar.gz
+        asset_name: bounceshield-linux.tar.gz
+        asset_content_type: application/gzip
