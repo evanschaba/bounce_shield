@@ -44,5 +44,5 @@ jobs:
         name: bounceshield
         path: |
           target/x86_64-apple-darwin/release/bounceshield
-          target/x86_64-pc-windows-msvc/release/bounceshield.exe
           target/x86_64-unknown-linux-gnu/release/bounceshield
+#         target/x86_64-pc-windows-msvc/release/bounceshield.exe
