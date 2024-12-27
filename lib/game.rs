@@ -110,7 +110,11 @@ impl Game {
             self.ball_dy *= -1.0;
             self.score += 1;
 
-            if let Some(pos) = self.milestones.iter().position(|&milestone| milestone == self.score) {
+            if let Some(pos) = self
+                .milestones
+                .iter()
+                .position(|&milestone| milestone == self.score)
+            {
                 self.award_heart();
                 self.bar_width = (self.bar_width + 15.0).min(300.0);
                 self.milestones.remove(pos);

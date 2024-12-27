@@ -1,5 +1,5 @@
-use macroquad::prelude::*;
 use bounce_shield::Game;
+use macroquad::prelude::*;
 
 #[macroquad::main("bounce_shield")]
 async fn main() {
