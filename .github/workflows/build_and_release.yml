@@ -73,30 +73,30 @@ jobs:
     - name: Build for Linux (Ubuntu)
       if: matrix.os == 'ubuntu-latest'
       run: |
-        cargo build --release --target x86_64-unknown-linux-gnu --bin bounceshield --verbose
+        cargo build --release --target x86_64-unknown-linux-gnu --bin bounce_shield --verbose
         ls -la target/x86_64-unknown-linux-gnu/release/
 
     - name: Package Binary (macOS)
       if: matrix.os == 'macos-latest'
       run: |
         mkdir -p release/mac
-        cp target/${{ matrix.target }}/release/bounceshield release/mac/bounceshield-${{ matrix.target }}
-        tar -czf release/mac/bounceshield-${{ matrix.target }}.tar.gz -C release/mac bounceshield-${{ matrix.target }}
+        cp target/${{ matrix.target }}/release/bounce_shield release/mac/bounce_shield-${{ matrix.target }}
+        tar -czf release/mac/bounce_shield-${{ matrix.target }}.tar.gz -C release/mac bounce_shield-${{ matrix.target }}
 
     - name: Package Binary (Ubuntu)
       if: matrix.os == 'ubuntu-latest'
       run: |
         mkdir -p release/linux
-        cp target/x86_64-unknown-linux-gnu/release/bounceshield release/linux/bounceshield
-        tar -czf release/linux/bounceshield-linux.tar.gz -C release/linux bounceshield
+        cp target/x86_64-unknown-linux-gnu/release/bounce_shield release/linux/bounce_shield
+        tar -czf release/linux/bounce_shield-linux.tar.gz -C release/linux bounce_shield
 
     - name: Create or Update GitHub Release and Upload Assets
       id: create_update_release
       uses: softprops/action-gh-release@v2
       with:
         files: |
-          release/mac/bounceshield-${{ matrix.target }}.tar.gz,
-          release/linux/bounceshield-linux.tar.gz
+          release/mac/bounce_shield-${{ matrix.target }}.tar.gz,
+          release/linux/bounce_shield-linux.tar.gz
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -107,8 +107,8 @@ jobs:
       if: startsWith(github.ref, 'refs/tags/')
       with:
         files: | 
-          release/mac/bounceshield-${{ matrix.target }}.tar.gz,
-          release/linux/bounceshield-linux.tar.gz
+          release/mac/bounce_shield-${{ matrix.target }}.tar.gz,
+          release/linux/bounce_shield-linux.tar.gz
         body_path: docs/RELEASE.md
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,8 +1,8 @@
-# Game Details - BounceShield
+# Game Details - bounce_shield
 
 ## Overview
 
-**BounceShield** is an engaging and simple arcade game where the player controls a bar to bounce a ball and prevent it from falling off the screen. The game includes a basic scoring system, hearts that represent lives, and milestones that grant the player more hearts or increase the size of the bar for added challenge.
+**bounce_shield** is an engaging and simple arcade game where the player controls a bar to bounce a ball and prevent it from falling off the screen. The game includes a basic scoring system, hearts that represent lives, and milestones that grant the player more hearts or increase the size of the bar for added challenge.
 
 ## Features
 

@@ -1,11 +1,11 @@
-# BounceShield v1.0.0
+# bounce_shield v1.0.0
 
-![Test Status](https://github.com/evanschaba/BounceShield/actions/workflows/ci_unit_test.yml/badge.svg)
+![Test Status](https://github.com/evanschaba/bounce_shield/actions/workflows/ci_unit_test.yml/badge.svg)
 
-**Full Changelog**: https://github.com/evanschaba/BounceShield/commits/v1.0.0
+**Full Changelog**: https://github.com/evanschaba/bounce_shield/commits/v1.0.0
 
 ### Overview
-**BounceShield** is an engaging and simple arcade game where the player controls a bar to bounce a ball and prevent it from falling off the screen. The game includes a basic scoring system, hearts that represent lives, and milestones that grant the player more hearts or increase the size of the bar for added challenge.
+**bounce_shield** is an engaging and simple arcade game where the player controls a bar to bounce a ball and prevent it from falling off the screen. The game includes a basic scoring system, hearts that represent lives, and milestones that grant the player more hearts or increase the size of the bar for added challenge.
 
 ### Features
 - **Ball Movement**: The ball bounces off the screen walls and the player's bar. It moves at a fixed speed, but future versions may include random speed changes or quirky behaviors.

@@ -1,5 +1,5 @@
 [package]
-name = "bounceshield"
+name = "bounce_shield"
 version = "1.0.0"
 edition = "2024"
 
@@ -7,5 +7,6 @@ edition = "2024"
 rand = "0.8.5"
 macroquad = "0.4.13"
 
-[target.x86_64-unknown-linux-gnu]
-linker = "/opt/homebrew/Cellar/musl-cross/0.9.9_2/bin/x86_64-linux-musl-gcc"
+[lib]
+name = "bounce_shield"
+path = "lib/lib.rs"
