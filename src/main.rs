@@ -3,9 +3,9 @@ use bounce_shield::{SCREEN_HEIGHT, SCREEN_WIDTH};
 use macroquad::prelude::*;
 
 /// Logic is now broken again, after game retry, the fullscreen issue is fixed for now
-/// 
+///
 /// next: handle the game logic, issues
-/// 
+///
 /// 0. after dropping the ball 3 times, press 'r' to retry takes forever to animate in
 /// 1. after retry, if you drop the ball once, the game over text is displayed then a retry option is offered
 /// 2. milestones are somehow reached even with a highscore of 0?? bruh.. everyone gets a trophy 4 participating??
@@ -33,7 +33,12 @@ async fn main() {
         set_camera(&Camera2D {
             zoom: vec2(2.0 / SCREEN_WIDTH, 2.0 / SCREEN_HEIGHT),
             target: vec2(SCREEN_WIDTH / 2.0, SCREEN_HEIGHT / 2.0),
-            viewport: Some((offset_x as i32, offset_y as i32, scaled_width as i32, scaled_height as i32)), // Corrected to tuple
+            viewport: Some((
+                offset_x as i32,
+                offset_y as i32,
+                scaled_width as i32,
+                scaled_height as i32,
+            )), // Corrected to tuple
             render_target: None,
             rotation: 0.0,
             offset: vec2(0.0, 0.0), // Added the missing `offset` field
