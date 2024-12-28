@@ -57,4 +57,4 @@
 
 © 2024 [Your Name]. All rights reserved.
 
-This software is released under the Unlicense. See the [UNLICENSE](UNLICENSE) for details.
+This software is released under the Unlicense. See the [UNLICENSE](LICENSE) for details.
