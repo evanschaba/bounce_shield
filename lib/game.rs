@@ -24,6 +24,12 @@ pub struct Game {
     pub restart_msg_shown: bool,
 }
 
+impl Default for Game {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Game {
     pub fn new() -> Self {
         let mut rng = ::rand::thread_rng();
@@ -162,6 +168,7 @@ impl Game {
         );
 
         draw_text(&format!("Score: {}", self.score), 20.0, 30.0, 30.0, GREEN);
+
         draw_text(
             &format!("High Score: {}", self.high_score),
             20.0,
@@ -169,6 +176,7 @@ impl Game {
             30.0,
             YELLOW,
         );
+
         draw_text(&format!("Hearts: {}", self.hearts), 20.0, 90.0, 30.0, RED);
 
         if self.text_timer > 0.0 {
