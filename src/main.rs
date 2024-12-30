@@ -23,7 +23,7 @@ pub enum Profession {
     Investor,
 }
 
-#[derive(Component)]
+#[derive(Component, Debug)]
 pub struct Employment {
     pub profession: Profession,
 }
@@ -81,29 +81,32 @@ pub fn setup(mut cmds: Commands) {
     }
 }
 
-pub fn print_active_names(q: Query<&Human>) {
+pub fn print_active_names(q: Query<(&Human, &Employment)>) {
     q.iter()
-        .filter_map(|person| {
-            if person.active {
-                Some(&person.name)
-            } else {
-                None
-            }
-        })
-        .for_each(|name| println!("{}", name));
+    .filter_map(|(person, employment)| {
+        if person.active {
+            Some((&person.name, employment))
+        } else {
+            None
+        }
+    })
+    .for_each(|(name, employment)| {
+        println!("name: {}, profession: {:?}", name, employment.profession)
+    });
     println!("\n")
 }
 
-pub fn print_in_active_names(q: Query<&Human>) {
-    println!("Inactive: ");
+pub fn print_in_active_names(q: Query<(&Human, &Employment)>) {
     q.iter()
-        .filter_map(|person| {
+        .filter_map(|(person, employment)| {
             if !person.active {
-                Some(&person.name)
+                Some((&person.name, employment))
             } else {
                 None
             }
         })
-        .for_each(|name| println!("{}", name));
+        .for_each(|(name, employment)| {
+            println!("name: {}, profession: {:?}", name, employment.profession)
+        });
     println!("\n")
 }
