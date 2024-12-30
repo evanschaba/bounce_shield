@@ -1,11 +1,19 @@
 use bevy::prelude::*;
 
 fn main() {
-    App::new()
-        .add_systems(Startup, setup)
-        .add_systems(Update, print_in_active_names)
-        .add_systems(Update, print_active_names)
-        .run();
+    App::new().add_plugins(MyPlug).run();
+}
+
+pub struct MyPlug;
+
+impl Plugin for MyPlug {
+    fn build(&self, app: &mut App) {
+        app.add_systems(Startup, setup)
+            .add_systems(Update, print_employed_humans)
+            .add_systems(Update, print_un_employed_humans)
+            .add_systems(Update, print_in_active_names)
+            .add_systems(Update, print_active_names);
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -83,16 +91,16 @@ pub fn setup(mut cmds: Commands) {
 
 pub fn print_active_names(q: Query<(&Human, &Employment)>) {
     q.iter()
-    .filter_map(|(person, employment)| {
-        if person.active {
-            Some((&person.name, employment))
-        } else {
-            None
-        }
-    })
-    .for_each(|(name, employment)| {
-        println!("name: {}, profession: {:?}", name, employment.profession)
-    });
+        .filter_map(|(person, employment)| {
+            if person.active {
+                Some((&person.name, employment))
+            } else {
+                None
+            }
+        })
+        .for_each(|(name, employment)| {
+            println!("name: {}, profession: {:?}", name, employment.profession)
+        });
     println!("\n")
 }
 
@@ -109,4 +117,12 @@ pub fn print_in_active_names(q: Query<(&Human, &Employment)>) {
             println!("name: {}, profession: {:?}", name, employment.profession)
         });
     println!("\n")
+}
+
+pub fn print_employed_humans(q: Query<&Human, With<Employment>>) {
+    q.iter().for_each(|h| println!("name: {}", h.name));
+}
+
+pub fn print_un_employed_humans(q: Query<&Human, Without<Employment>>) {
+    q.iter().for_each(|h| println!("name: {}", h.name));
 }
