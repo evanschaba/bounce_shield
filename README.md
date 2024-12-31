@@ -4,6 +4,8 @@
 
 [**Game Details**](docs/game-details.md)
 
+#### ⚙️ )wip) changing macroquad thin game engine to bevy
+
 ## Problem Decomposition
 
 The task is to create a simple ball-and-bar game where the player controls a bar to bounce a ball and avoid it falling off the screen. The game includes scoring, hearts, and increasing difficulty by adding milestones for extra hearts and bar width.

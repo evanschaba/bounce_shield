@@ -1,9 +1,15 @@
 use bevy::prelude::*;
 
 fn main() {
-    App::new().add_plugins(MyPlug).run();
+    let x = 2_000_000;
+    let y = 40_000;
+    println!("{} / {} = {}", x, y, x / y)
+    // App ::new().add_plugins(MyPlug).run();
 }
 
+// calculate:  = ?
+
+// improve this please
 pub struct MyPlug;
 
 impl Plugin for MyPlug {
