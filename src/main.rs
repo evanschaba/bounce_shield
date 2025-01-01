@@ -41,42 +41,25 @@ pub struct Human {
     pub name: String,
     pub active: bool,
 }
+
 pub fn setup(mut cmds: Commands) {
     let names_and_activeness = vec![
-        ("Alice", true),
-        ("Jaqueline", true),
-        ("Janice", true),
-        ("Jess", false),
-        ("Suheila", true),
-        ("Mariam", true),
-        ("Rose", false),
-        ("Alexandra", false),
-        ("Emily", false),
-        ("Anne", true),
-        ("Sharon", true),
-        ("Esther", false),
-        ("Lucia", true),
+        ("Alice", true, Profession::None),
+        ("Jaqueline", true, Profession::Mechanic),
+        ("Janice", true, Profession::Engineer),
+        ("Jess", false, Profession::Researcher),
+        ("Suheila", true, Profession::Teacher),
+        ("Mariam", true, Profession::Musician),
+        ("Rose", false, Profession::Doctor),
+        ("Alexandra", false, Profession::Driver),
+        ("Emily", false, Profession::Accountant),
+        ("Anne", true, Profession::Manager),
+        ("Sharon", true, Profession::Investor),
+        ("Esther", false, Profession::None),
+        ("Lucia", true, Profession::Mechanic),
     ];
 
-    let professions = vec![
-        Profession::None,
-        Profession::Mechanic,
-        Profession::Engineer,
-        Profession::Researcher,
-        Profession::Teacher,
-        Profession::Musician,
-        Profession::Doctor,
-        Profession::Driver,
-        Profession::Accountant,
-        Profession::Manager,
-        Profession::Investor,
-        Profession::None,
-    ];
-
-    for ((name, active), profession) in names_and_activeness
-        .into_iter()
-        .zip(professions.iter().cycle())
-    {
+    for (name, active, profession) in names_and_activeness.into_iter() {
         cmds.spawn((
             Human {
                 name: name.to_string(),
