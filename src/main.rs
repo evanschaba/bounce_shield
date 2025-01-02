@@ -1,111 +1,173 @@
 use bevy::prelude::*;
+use bevy::text::cosmic_text::ttf_parser::Style;
+use bevy::window::WindowResized;
+use ::rand::Rng;
 
-fn main() {
-    App::new().add_plugins(MyPlug).run();
-}
+const BALL_SIZE: f32 = 20.0;
+const BAR_HEIGHT: f32 = 20.0;
+const INITIAL_BAR_WIDTH: f32 = 150.0;
+const COUNTDOWN_DURATION: f32 = 3.0;
 
-pub struct MyPlug;
-
-impl Plugin for MyPlug {
-    fn build(&self, app: &mut App) {
-        app.add_systems(Startup, setup)
-            .add_systems(Update, print_employed_humans)
-            .add_systems(Update, print_un_employed_humans)
-            .add_systems(Update, print_in_active_names)
-            .add_systems(Update, print_active_names);
-    }
-}
-
-#[derive(Debug, Clone)]
-pub enum Profession {
-    None,
-    Mechanic,
-    Engineer,
-    Researcher,
-    Teacher,
-    Musician,
-    Doctor,
-    Driver,
-    Accountant,
-    Manager,
-    Investor,
-}
-
-#[derive(Component, Debug)]
-pub struct Employment {
-    pub profession: Profession,
+#[derive(Resource)]
+struct Game {
+    ball: Ball,
+    bar: Bar,
+    score: usize,
+    high_score: usize,
+    hearts: usize,
+    milestones: Vec<usize>,
+    game_over: bool,
+    countdown: f32,
+    text_animation: String,
+    text_timer: f32,
+    ball_speed_multiplier: f32,
+    restart_msg_shown: bool,
 }
 
 #[derive(Component)]
-pub struct Human {
-    pub name: String,
-    pub active: bool,
+struct Ball {
+    x: f32,
+    y: f32,
+    dx: f32,
+    dy: f32,
 }
 
-pub fn setup(mut cmds: Commands) {
-    let names_and_activeness = vec![
-        ("Alice", true, Profession::None),
-        ("Jaqueline", true, Profession::Mechanic),
-        ("Janice", true, Profession::Engineer),
-        ("Jess", false, Profession::Researcher),
-        ("Suheila", true, Profession::Teacher),
-        ("Mariam", true, Profession::Musician),
-        ("Rose", false, Profession::Doctor),
-        ("Alexandra", false, Profession::Driver),
-        ("Emily", false, Profession::Accountant),
-        ("Anne", true, Profession::Manager),
-        ("Sharon", true, Profession::Investor),
-        ("Esther", false, Profession::None),
-        ("Lucia", true, Profession::Mechanic),
-    ];
+#[derive(Component)]
+struct Bar {
+    x: f32,
+    width: f32,
+}
 
-    for (name, active, profession) in names_and_activeness.into_iter() {
-        cmds.spawn((
-            Human {
-                name: name.to_string(),
-                active,
+#[derive(Resource)]
+struct WindowSize {
+    width: f32,
+    height: f32,
+}
+
+impl Default for Game {
+    fn default() -> Self {
+        let mut rng = ::rand::thread_rng();
+        Self {
+            ball: Ball {
+                x: rng.gen_range(BALL_SIZE..800.0 - BALL_SIZE),
+                y: rng.gen_range(BALL_SIZE..600.0 / 2.0),
+                dx: if rng.gen_bool(0.5) { 3.0 } else { -3.0 },
+                dy: 3.0,
             },
-            Employment {
-                profession: profession.clone(),
+            bar: Bar {
+                x: (800.0 - INITIAL_BAR_WIDTH) / 2.0,
+                width: INITIAL_BAR_WIDTH,
             },
-        ));
+            score: 0,
+            high_score: 0,
+            hearts: 3,
+            milestones: vec![5],
+            game_over: false,
+            countdown: COUNTDOWN_DURATION,
+            text_animation: "GAME START!".to_string(),
+            text_timer: 0.0,
+            ball_speed_multiplier: 1.0,
+            restart_msg_shown: false,
+        }
     }
 }
 
-pub fn print_active_names(q: Query<(&Human, &Employment)>) {
-    q.iter()
-        .filter_map(|(person, employment)| {
-            if person.active {
-                Some((&person.name, employment))
-            } else {
-                None
-            }
+fn main() {
+    App::new()
+        .insert_resource(WindowDescriptor {
+            title: "Bevy Breakout Game".to_string(),
+            width: 800.0,
+            height: 600.0,
+            resizable: true,
+            ..Default::default()
         })
-        .for_each(|(name, employment)| {
-            println!("name: {}, profession: {:?}", name, employment.profession)
-        });
-    println!("\n")
-}
-
-pub fn print_in_active_names(q: Query<(&Human, &Employment)>) {
-    q.iter()
-        .filter_map(|(person, employment)| {
-            if !person.active {
-                Some((&person.name, employment))
-            } else {
-                None
-            }
+        .add_plugins(DefaultPlugins)
+        .insert_resource(Game::default())
+        .insert_resource(WindowSize {
+            width: 800.0,
+            height: 600.0,
         })
-        .for_each(|(name, employment)| {
-            println!("name: {}, profession: {:?}", name, employment.profession)
-        });
-    println!("\n")
+        .add_startup_system(setup)
+        .add_system(update)
+        .add_system(draw_ui)
+        .add_system(ball_collision_and_logic)
+        .add_system(resize_window)
+        .run();
 }
 
-pub fn print_employed_humans(q: Query<&Human, With<Employment>>) {
-    q.iter().for_each(|h| println!("name: {}", h.name));
+fn setup(mut commands: Commands) {
+    commands.spawn(Camera2dBundle::default());
 }
 
-pub fn print_un_employed_humans(q: Query<&Human, Without<Employment>>) {
-    q.iter().for_each(|h| println!("name: {}", h.name));
+fn update(
+    mut game: ResMut<Game>,
+    keys: Res<Input<KeyCode>>,
+    time: Res<Time>,
+    window_size: Res<WindowSize>,
+) {
+    let dt = time.delta_seconds();
+
+    if game.countdown > 0.0 {
+        game.countdown -= dt;
+        game.text_animation = format!("Starting in: {:.0}", game.countdown.ceil());
+        return;
+    } else if game.countdown <= 0.0 && game.text_timer == 0.0 {
+        game.text_timer = 1.0;
+    }
+
+    if game.text_timer > 0.0 {
+        game.text_timer -= dt;
+        return;
+    }
+
+    if game.game_over {
+        if !game.restart_msg_shown {
+            game.text_animation = "Press R to retry!".to_string();
+            game.restart_msg_shown = true;
+        }
+
+        if keys.just_pressed(KeyCode::R) {
+            let mut rng = ::rand::thread_rng();
+            *game = Game {
+                ball: Ball {
+                    x: rng.gen_range(BALL_SIZE..window_size.width - BALL_SIZE),
+                    y: rng.gen_range(BALL_SIZE..window_size.height / 2.0),
+                    dx: if rng.gen_bool(0.5) { 3.0 } else { -3.0 },
+                    dy: 3.0,
+                },
+                bar: Bar {
+                    x: (window_size.width - INITIAL_BAR_WIDTH) / 2.0,
+                    width: INITIAL_BAR_WIDTH,
+                },
+                high_score: game.high_score,
+                milestones: vec![game.high_score, game.high_score * 2],
+                hearts: 3,
+                ball_speed_multiplier: 1.0,
+                countdown: COUNTDOWN_DURATION,
+                ..Default::default()
+            };
+        }
+        return;
+    }
+
+    // Ball movement
+    game.ball.x += game.ball.dx * game.ball_speed_multiplier;
+    game.ball.y += game.ball.dy * game.ball_speed_multiplier;
+
+    // Ball wall collisions
+    if game.ball.x <= 0.0 || game.ball.x + BALL_SIZE >= window_size.width {
+        game.ball.dx *= -1.0;
+    }
+
+    if game.ball.y <= 0.0 {
+        game.ball.dy *= -1.0;
+    }
+
+    // Bar movement
+    if keys.pressed(KeyCode::Left) && game.bar.x > 0.0 {
+        game.bar.x -= 5.0;
+    }
+    if keys.pressed(KeyCode::Right) && game.bar.x + game.bar.width < window_size.width {
+        game.bar.x += 5.0;
+    }
 }
