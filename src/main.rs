@@ -96,31 +96,6 @@ fn main() {
         .run();
 }
 
-// fn main() {
-//     App::new()
-//         .add_plugins(DefaultPlugins.set(WindowPlugin {
-//             primary_window: Some(Window {
-//                 title: "bounce_shield".to_string(),
-//                 resolution: (800.0, 600.0).into(),
-//                 resizable: true,
-//                 ..default()
-//             }),
-//             ..default()
-//         }))
-//         .add_plugins(DefaultPlugins)
-//         .insert_resource(Game::default())
-//         .insert_resource(WindowSize {
-//             width: 800.0,
-//             height: 600.0,
-//         })
-//         .add_systems(Startup, setup)
-//         .add_systems(Update, update)
-//         // .add_systems(Update, draw_ui)
-//         // .add_systems(Update, ball_collision_and_logic)
-//         // .add_systems(Update, resize_window)
-//         .run();
-// }
-
 fn setup(mut cmds: Commands) {
     cmds.spawn(Camera2d::default());
 }
