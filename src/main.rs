@@ -1,35 +1,35 @@
 use bevy::prelude::*;
-use bevy::text::cosmic_text::ttf_parser::Style;
-use bevy::window::WindowResized;
+// use bevy::text::cosmic_text::ttf_parser::Style;
+// use bevy::window::WindowResized;
 use ::rand::Rng;
 
 const BALL_SIZE: f32 = 20.0;
-const BAR_HEIGHT: f32 = 20.0;
+// const BAR_HEIGHT: f32 = 20.0;
 const INITIAL_BAR_WIDTH: f32 = 150.0;
 const COUNTDOWN_DURATION: f32 = 3.0;
 
 #[derive(Resource)]
-struct Game {
-    ball: Ball,
-    bar: Bar,
-    score: usize,
-    high_score: usize,
-    hearts: usize,
-    milestones: Vec<usize>,
-    game_over: bool,
-    countdown: f32,
-    text_animation: String,
-    text_timer: f32,
-    ball_speed_multiplier: f32,
-    restart_msg_shown: bool,
+pub struct Game {
+    pub ball: Ball,
+    pub(crate) b_bar: Bar,
+    pub high_score: usize,
+    pub score: usize,
+    pub hearts: usize,
+    pub milestones: Vec<usize>,
+    pub game_over: bool,
+    pub countdown: f32,
+    pub text_animation: String,
+    pub text_timer: f32,
+    pub ball_speed_multiplier: f32,
+    pub restart_msg_shown: bool,
 }
 
 #[derive(Component)]
-struct Ball {
-    x: f32,
-    y: f32,
-    dx: f32,
-    dy: f32,
+pub struct Ball {
+    pub x: f32,
+    pub y: f32,
+    pub dx: f32,
+    pub dy: f32,
 }
 
 #[derive(Component)]
@@ -54,7 +54,7 @@ impl Default for Game {
                 dx: if rng.gen_bool(0.5) { 3.0 } else { -3.0 },
                 dy: 3.0,
             },
-            bar: Bar {
+            b_bar: Bar {
                 x: (800.0 - INITIAL_BAR_WIDTH) / 2.0,
                 width: INITIAL_BAR_WIDTH,
             },
@@ -74,13 +74,15 @@ impl Default for Game {
 
 fn main() {
     App::new()
-        .insert_resource(WindowDescriptor {
-            title: "Bevy Breakout Game".to_string(),
-            width: 800.0,
-            height: 600.0,
-            resizable: true,
-            ..Default::default()
-        })
+        .add_plugins(DefaultPlugins.set(WindowPlugin {
+            primary_window: Some(Window {
+                title: "bounce_shield".to_string(),
+                resolution: (800.0, 600.0).into(),
+                resizable: true,
+                ..default()
+            }),
+            ..default()
+        }))
         .add_plugins(DefaultPlugins)
         .insert_resource(Game::default())
         .insert_resource(WindowSize {
@@ -135,7 +137,7 @@ fn update(
                     dx: if rng.gen_bool(0.5) { 3.0 } else { -3.0 },
                     dy: 3.0,
                 },
-                bar: Bar {
+                b_bar: Bar {
                     x: (window_size.width - INITIAL_BAR_WIDTH) / 2.0,
                     width: INITIAL_BAR_WIDTH,
                 },
@@ -164,11 +166,10 @@ fn update(
     }
 
     // Bar movement
-    if keys.pressed(KeyCode::ArrowLeft) && game.bar.x > 0.0 {
-        game.bar.x -= 5.0;
+    if keys.pressed(KeyCode::ArrowLeft) && game.b_bar.x > 0.0 {
+        game.b_bar.x -= 5.0;
     }
-    if keys.pressed(KeyCode::ArrowRight) && game.bar.x + game.bar.width < window_size.width {
-        game.bar.x += 5.0;
+    if keys.pressed(KeyCode::ArrowRight) && game.b_bar.x + game.b_bar.width < window_size.width {
+        game.b_bar.x += 5.0;
     }
 }
- 
