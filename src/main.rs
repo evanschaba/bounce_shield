@@ -105,7 +105,7 @@ fn update(
     time: Res<Time>,
     window_size: Res<WindowSize>,
 ) {
-    let dt = time.delta_secs_f32();
+    let dt = time.delta_secs();
 
     if game.countdown > 0.0 {
         game.countdown -= dt;
@@ -164,10 +164,10 @@ fn update(
     }
 
     // Bar movement
-    if keys.pressed(KeyCode::Left) && game.bar.x > 0.0 {
+    if keys.pressed(KeyCode::ArrowLeft) && game.bar.x > 0.0 {
         game.bar.x -= 5.0;
     }
-    if keys.pressed(KeyCode::Right) && game.bar.x + game.bar.width < window_size.width {
+    if keys.pressed(KeyCode::ArrowRight) && game.bar.x + game.bar.width < window_size.width {
         game.bar.x += 5.0;
     }
 }
