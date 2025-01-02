@@ -87,25 +87,25 @@ fn main() {
             width: 800.0,
             height: 600.0,
         })
-        .add_startup_system(setup)
-        .add_system(update)
-        .add_system(draw_ui)
-        .add_system(ball_collision_and_logic)
-        .add_system(resize_window)
+        .add_systems(Startup, setup)
+        .add_systems(Update, update)
+        // .add_systems(Update, draw_ui)
+        // .add_systems(Update, ball_collision_and_logic)
+        // .add_systems(Update, resize_window)
         .run();
 }
 
-fn setup(mut commands: Commands) {
-    commands.spawn(Camera2dBundle::default());
+fn setup(mut cmds: Commands) {
+    cmds.spawn(Camera2d::default());
 }
 
 fn update(
     mut game: ResMut<Game>,
-    keys: Res<Input<KeyCode>>,
+    keys: Res<ButtonInput<KeyCode>>,
     time: Res<Time>,
     window_size: Res<WindowSize>,
 ) {
-    let dt = time.delta_seconds();
+    let dt = time.delta_secs_f32();
 
     if game.countdown > 0.0 {
         game.countdown -= dt;
@@ -126,7 +126,7 @@ fn update(
             game.restart_msg_shown = true;
         }
 
-        if keys.just_pressed(KeyCode::R) {
+        if keys.just_pressed(KeyCode::KeyR) {
             let mut rng = ::rand::thread_rng();
             *game = Game {
                 ball: Ball {
@@ -171,3 +171,4 @@ fn update(
         game.bar.x += 5.0;
     }
 }
+ 
