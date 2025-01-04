@@ -1,12 +1,12 @@
 use bevy::prelude::*;
-// use bevy::text::cosmic_text::ttf_parser::Style;
-// use bevy::window::WindowResized;
 use ::rand::Rng;
 
 const BALL_SIZE: f32 = 20.0;
 // const BAR_HEIGHT: f32 = 20.0;
 const INITIAL_BAR_WIDTH: f32 = 150.0;
 const COUNTDOWN_DURATION: f32 = 3.0;
+
+// nothing happens upon window launch, i have to start over
 
 #[derive(Resource)]
 pub struct Game {
@@ -107,7 +107,7 @@ fn update(
     window_size: Res<WindowSize>,
 ) {
     let dt = time.delta_secs();
-
+ 
     if game.countdown > 0.0 {
         game.countdown -= dt;
         game.text_animation = format!("Starting in: {:.0}", game.countdown.ceil());
