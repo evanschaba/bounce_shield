@@ -4,7 +4,7 @@ use ggez::event;
 use ggez::{ContextBuilder, GameResult};
 
 fn main() -> GameResult {
-    let (mut ctx, event_loop) = ContextBuilder::new("bounce_shield", "Your Name")
+    let (mut ctx, event_loop) = ContextBuilder::new("bounce_shield", "🏐")
         .default_conf(Conf::new().window_mode(WindowMode::default().dimensions(WIDTH, HEIGHT)))
         .build()?;
     let game = Game::new(&mut ctx)?;
