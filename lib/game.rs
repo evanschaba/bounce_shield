@@ -94,7 +94,7 @@ impl Game {
             [WIDTH / 2.0, HEIGHT / 2.0],
             2,
             72.0,
-            Color::YELLOW,
+            Color::CYAN,
         );
         Ok(game)
     }
@@ -130,7 +130,7 @@ impl Game {
             [WIDTH / 2.0, HEIGHT / 2.0],
             2,
             72.0,
-            Color::YELLOW,
+            Color::CYAN,
         );
     }
 
@@ -142,7 +142,7 @@ impl Game {
                     [WIDTH / 2.0, HEIGHT / 2.0],
                     2,
                     48.0,
-                    Color::YELLOW,
+                    Color::CYAN,
                 );
             }
             self.high_score = self.score;
@@ -288,7 +288,7 @@ impl EventHandler for Game {
             let countdown_text = Text::new(
                 TextFragment::new(format!("{}", self.countdown_value))
                     .scale(96.0)
-                    .color(Color::YELLOW),
+                    .color(Color::CYAN),
             );
             let dims = countdown_text.dimensions(ctx).unwrap();
             countdown_text.draw(
@@ -353,7 +353,7 @@ impl EventHandler for Game {
                         [WIDTH / 2.0, HEIGHT / 2.0],
                         999,
                         72.0,
-                        Color::YELLOW,
+                        Color::CYAN,
                     );
                 } else if self.state == GameState::Paused {
                     self.state = GameState::Playing;
