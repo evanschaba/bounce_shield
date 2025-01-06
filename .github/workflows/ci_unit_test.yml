@@ -20,7 +20,7 @@ jobs:
           
       # Install dependencies for ALSA support (if required)
       - name: Install ALSA dependencies
-        run: sudo apt-get install -y libasound2-dev libudev-sys
+        run: sudo apt-get install -y libasound2-dev pkg-config
 
       # Install rustfmt for the nightly toolchain
       - run: rustup component add rustfmt --toolchain nightly
