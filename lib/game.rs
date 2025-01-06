@@ -18,6 +18,19 @@ pub const BAR_SPEED: f32 = 10.0;
 pub const BALL_SPEED: f32 = 5.0;
 pub const INITIAL_HEARTS: usize = 3;
 
+pub struct Bar {
+    pub x: f32,
+    pub y: f32,
+    pub width: f32,
+}
+
+pub struct Ball {
+    pub x: f32,
+    pub y: f32,
+    pub dx: f32,
+    pub dy: f32,
+}
+
 pub struct AnimatedText {
     pub text: String,
     pub start_time: Instant,
@@ -59,8 +72,8 @@ pub enum GameState {
 }
 
 pub struct Game {
-    pub(self) ball: Ball,
-    pub(self) bar: Bar,
+    pub ball: Ball,
+    pub bar: Bar,
     pub score: usize,
     pub high_score: usize,
     pub hearts: usize,
@@ -160,6 +173,67 @@ impl Game {
             }
         }
     }
+
+    pub fn handle_ball_collisions(&mut self) {
+        // Ball-wall collision
+        if self.ball.x <= 0.0 || self.ball.x + BALL_SIZE >= WIDTH {
+            self.ball.dx *= -1.0;
+        }
+        if self.ball.y <= 0.0 {
+            self.ball.dy *= -1.0;
+        }
+
+        // Ball-bar collision
+        if self.ball.y + BALL_SIZE >= self.bar.y
+            && self.ball.x + BALL_SIZE >= self.bar.x
+            && self.ball.x <= self.bar.x + self.bar.width
+        {
+            self.ball.dy *= -1.0;
+            self.score += 1;
+            self.check_high_score();
+        }
+
+        // Ball falls off screen
+        if self.ball.y > HEIGHT {
+            self.hearts -= 1;
+            if self.hearts == 0 {
+                self.state = GameState::GameOver;
+                self.add_animation(
+                    "Game Over!".to_string(),
+                    [WIDTH / 2.0, HEIGHT / 2.0],
+                    999,
+                    72.0,
+                    Color::RED,
+                );
+                self.add_animation(
+                    "Press 'R' to retry".to_string(),
+                    [WIDTH / 2.0, HEIGHT / 2.0 + 50.0],
+                    999,
+                    36.0,
+                    Color::WHITE,
+                );
+            } else {
+                self.add_animation(
+                    format!("Lost a heart! {} remaining", self.hearts),
+                    [WIDTH / 2.0, HEIGHT / 2.0],
+                    2,
+                    48.0,
+                    Color::RED,
+                );
+                self.ball = Ball::new();
+            }
+        }
+    }
+
+    pub fn handle_bar_movement(&mut self, ctx: &mut Context) {
+        let keys = ctx.keyboard.pressed_keys();
+        if keys.contains(&KeyCode::Left) || keys.contains(&KeyCode::A) {
+            self.bar.move_left();
+        }
+        if keys.contains(&KeyCode::Right) || keys.contains(&KeyCode::D) {
+            self.bar.move_right();
+        }
+    }
 }
 
 impl EventHandler for Game {
@@ -197,64 +271,8 @@ impl EventHandler for Game {
             }
             GameState::Playing => {
                 self.ball.update();
-
-                // Ball-wall collision
-                if self.ball.x <= 0.0 || self.ball.x + BALL_SIZE >= WIDTH {
-                    self.ball.dx *= -1.0;
-                }
-                if self.ball.y <= 0.0 {
-                    self.ball.dy *= -1.0;
-                }
-
-                // Ball-bar collision
-                if self.ball.y + BALL_SIZE >= self.bar.y
-                    && self.ball.x + BALL_SIZE >= self.bar.x
-                    && self.ball.x <= self.bar.x + self.bar.width
-                {
-                    self.ball.dy *= -1.0;
-                    self.score += 1;
-                    self.check_high_score();
-                }
-
-                // Ball falls off screen
-                if self.ball.y > HEIGHT {
-                    self.hearts -= 1;
-                    if self.hearts == 0 {
-                        self.state = GameState::GameOver;
-                        self.add_animation(
-                            "Game Over!".to_string(),
-                            [WIDTH / 2.0, HEIGHT / 2.0],
-                            999,
-                            72.0,
-                            Color::RED,
-                        );
-                        self.add_animation(
-                            "Press 'R' to retry".to_string(),
-                            [WIDTH / 2.0, HEIGHT / 2.0 + 50.0],
-                            999,
-                            36.0,
-                            Color::WHITE,
-                        );
-                    } else {
-                        self.add_animation(
-                            format!("Lost a heart! {} remaining", self.hearts),
-                            [WIDTH / 2.0, HEIGHT / 2.0],
-                            2,
-                            48.0,
-                            Color::RED,
-                        );
-                        self.ball = Ball::new();
-                    }
-                }
-
-                // Bar movement
-                let keys = ctx.keyboard.pressed_keys();
-                if keys.contains(&KeyCode::Left) || keys.contains(&KeyCode::A) {
-                    self.bar.move_left();
-                }
-                if keys.contains(&KeyCode::Right) || keys.contains(&KeyCode::D) {
-                    self.bar.move_right();
-                }
+                self.handle_ball_collisions(); // Handle ball collisions
+                self.handle_bar_movement(ctx); // Handle bar movement
             }
         }
 
@@ -379,11 +397,16 @@ impl EventHandler for Game {
     }
 }
 
-struct Ball {
-    x: f32,
-    y: f32,
-    dx: f32,
-    dy: f32,
+impl Default for Ball {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl Default for Bar {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl Ball {
@@ -405,12 +428,6 @@ impl Ball {
         self.x += self.dx;
         self.y += self.dy;
     }
-}
-
-struct Bar {
-    x: f32,
-    y: f32,
-    width: f32,
 }
 
 impl Bar {
