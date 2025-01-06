@@ -1,3 +1,5 @@
+use ggez::ContextBuilder;
+use ggez::conf::Conf;
 use ggez::graphics::{Drawable, Text, TextFragment};
 use ggez::input::keyboard::{KeyCode, KeyInput};
 use ggez::{
@@ -452,4 +454,14 @@ impl Bar {
             self.x = WIDTH - self.width;
         }
     }
+}
+
+// Mock Context for testing without running the event loop
+pub fn create_game_ctx()
+-> Result<(ggez::Context, ggez::event::EventLoop<()>), Box<dyn std::error::Error>> {
+    let mode = Conf::new().window_mode(WindowMode::default().dimensions(WIDTH, HEIGHT));
+    let (ctx, event_loop) = ContextBuilder::new("bounce_shield", "🏐")
+        .default_conf(mode)
+        .build()?;
+    Ok((ctx, event_loop))
 }

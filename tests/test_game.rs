@@ -1,17 +1,6 @@
 use bounce_shield::{
     BALL_SIZE, BALL_SPEED, BAR_WIDTH, Ball, Bar, Game, GameState, HEIGHT, INITIAL_HEARTS, WIDTH,
 };
-use ggez::ContextBuilder;
-use ggez::conf::{Conf, WindowMode};
-
-// Mock Context for testing without running the event loop
-pub fn create_mock_context() -> Result<ggez::Context, Box<dyn std::error::Error>> {
-    let mode = Conf::new().window_mode(WindowMode::default().dimensions(WIDTH, HEIGHT));
-    let (ctx, _) = ContextBuilder::new("bounce_shield", "🏐")
-        .default_conf(mode)
-        .build()?;
-    Ok(ctx)
-}
 
 #[test]
 fn test_ball_initialization() {

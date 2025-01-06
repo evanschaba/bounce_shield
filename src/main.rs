@@ -1,12 +1,8 @@
-use bounce_shield::{Game, HEIGHT, WIDTH};
-use ggez::conf::{Conf, WindowMode};
+use bounce_shield::{Game, create_game_ctx};
 use ggez::event;
-use ggez::{ContextBuilder, GameResult};
 
-fn main() -> GameResult {
-    let (mut ctx, event_loop) = ContextBuilder::new("bounce_shield", "🏐")
-        .default_conf(Conf::new().window_mode(WindowMode::default().dimensions(WIDTH, HEIGHT)))
-        .build()?;
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let (mut ctx, event_loop) = create_game_ctx()?;
     let game = Game::new(&mut ctx)?;
     event::run(ctx, event_loop, game)
 }
