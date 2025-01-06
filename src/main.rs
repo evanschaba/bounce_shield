@@ -1,12 +1,19 @@
-use minifb::{Key, Window, WindowOptions};
+use ggez::graphics::{Drawable, Font, Scale, Text, TextFragment};
+use ggez::{
+    Context, ContextBuilder, GameResult,
+    conf::{Conf, WindowMode, WindowSetup},
+    event::{self, EventHandler, KeyCode, KeyMods},
+    graphics::{self, Color, DrawParam},
+};
 use rand::Rng;
+use std::time::{Duration, Instant};
 
-const WIDTH: usize = 800;
-const HEIGHT: usize = 600;
+const WIDTH: f32 = 800.0;
+const HEIGHT: f32 = 600.0;
 const BALL_SIZE: f32 = 20.0;
 const BAR_WIDTH: f32 = 150.0;
 const BAR_HEIGHT: f32 = 20.0;
-const BAR_SPEED: f32 = 8.0;
+const BAR_SPEED: f32 = 10.0;
 const BALL_SPEED: f32 = 5.0;
 const INITIAL_HEARTS: usize = 3;
 
@@ -28,17 +35,24 @@ struct Game {
     bar: Bar,
     score: usize,
     high_score: usize,
+    milestone: usize,
     hearts: usize,
     game_over: bool,
+    paused: bool,
+    font: Font,
+    countdown_start: Option<Instant>,
+    countdown_value: i32,
+    fullscreen: bool,
 }
 
 impl Game {
-    fn new() -> Self {
+    fn new(ctx: &mut Context) -> GameResult<Self> {
         let mut rng = rand::thread_rng();
-        Self {
+        let font = Font::default();
+        Ok(Self {
             ball: Ball {
-                x: rng.gen_range(BALL_SIZE..(WIDTH as f32 - BALL_SIZE)),
-                y: HEIGHT as f32 / 3.0,
+                x: rng.gen_range(BALL_SIZE..WIDTH - BALL_SIZE),
+                y: HEIGHT / 3.0,
                 dx: if rng.gen_bool(0.5) {
                     BALL_SPEED
                 } else {
@@ -47,132 +61,194 @@ impl Game {
                 dy: BALL_SPEED,
             },
             bar: Bar {
-                x: (WIDTH as f32 - BAR_WIDTH) / 2.0,
-                y: HEIGHT as f32 - BAR_HEIGHT - 10.0,
+                x: (WIDTH - BAR_WIDTH) / 2.0,
+                y: HEIGHT - BAR_HEIGHT - 10.0,
                 width: BAR_WIDTH,
             },
             score: 0,
             high_score: 0,
+            milestone: 10,
             hearts: INITIAL_HEARTS,
             game_over: false,
-        }
+            paused: false,
+            font,
+            countdown_start: Some(Instant::now()),
+            countdown_value: 5,
+            fullscreen: false,
+        })
     }
 
     fn reset(&mut self) {
         let mut rng = rand::thread_rng();
-        self.ball = Ball {
-            x: rng.gen_range(BALL_SIZE..(WIDTH as f32 - BALL_SIZE)),
-            y: HEIGHT as f32 / 3.0,
-            dx: if rng.gen_bool(0.5) {
-                BALL_SPEED
-            } else {
-                -BALL_SPEED
-            },
-            dy: BALL_SPEED,
+        self.ball.x = rng.gen_range(BALL_SIZE..WIDTH - BALL_SIZE);
+        self.ball.y = HEIGHT / 3.0;
+        self.ball.dx = if rng.gen_bool(0.5) {
+            BALL_SPEED
+        } else {
+            -BALL_SPEED
         };
+        self.ball.dy = BALL_SPEED;
         self.score = 0;
         self.hearts = INITIAL_HEARTS;
         self.game_over = false;
+        self.countdown_start = Some(Instant::now());
+        self.countdown_value = 5;
     }
 
-    fn update_high_score(&mut self) {
-        if self.score > self.high_score {
-            self.high_score = self.score;
+    fn toggle_pause(&mut self) {
+        self.paused = !self.paused;
+    }
+
+    fn toggle_fullscreen(&mut self, ctx: &mut Context) {
+        self.fullscreen = !self.fullscreen;
+        let mode = if self.fullscreen {
+            WindowMode::default().fullscreen_type(ggez::conf::FullscreenType::True)
+        } else {
+            WindowMode::default().fullscreen_type(ggez::conf::FullscreenType::Windowed)
+        };
+        ggez::graphics::set_mode(ctx, mode).expect("Failed to toggle fullscreen");
+    }
+
+    fn update_countdown(&mut self) {
+        if let Some(start_time) = self.countdown_start {
+            if Instant::now().duration_since(start_time) >= Duration::from_secs(1) {
+                self.countdown_value -= 1;
+                self.countdown_start = Some(Instant::now());
+            }
         }
     }
 }
 
-fn main() {
-    let mut window = Window::new("bounce_shield v1.0.0", WIDTH, HEIGHT, WindowOptions {
-        resize: false,
-        scale: minifb::Scale::X1,
-        ..WindowOptions::default()
-    })
-    .unwrap_or_else(|_| panic!("Failed to create window"));
+impl EventHandler for Game {
+    fn update(&mut self, ctx: &mut Context) -> GameResult<()> {
+        if self.game_over {
+            return Ok(());
+        }
 
-    let mut buffer: Vec<u32> = vec![0; WIDTH * HEIGHT];
-    let mut game = Game::new();
+        if self.countdown_value > 0 {
+            self.update_countdown();
+            return Ok(());
+        }
 
-    while window.is_open() && !window.is_key_down(Key::Escape) {
-        buffer.fill(0); // Clear screen
+        if self.paused {
+            return Ok(());
+        }
 
-        if game.game_over {
-            // Show "Game Over" screen
-            if window.is_key_down(Key::R) {
-                game.reset();
-            }
-        } else {
-            // Ball movement
-            game.ball.x += game.ball.dx;
-            game.ball.y += game.ball.dy;
+        // Ball movement
+        self.ball.x += self.ball.dx;
+        self.ball.y += self.ball.dy;
 
-            // Ball-wall collision
-            if game.ball.x <= 0.0 || game.ball.x + BALL_SIZE >= WIDTH as f32 {
-                game.ball.dx *= -1.0;
-            }
-            if game.ball.y <= 0.0 {
-                game.ball.dy *= -1.0;
-            }
+        // Ball-wall collision
+        if self.ball.x <= 0.0 || self.ball.x + BALL_SIZE >= WIDTH {
+            self.ball.dx *= -1.0;
+        }
+        if self.ball.y <= 0.0 {
+            self.ball.dy *= -1.0;
+        }
 
-            // Ball-bar collision
-            if game.ball.y + BALL_SIZE >= game.bar.y
-                && game.ball.x + BALL_SIZE >= game.bar.x
-                && game.ball.x <= game.bar.x + game.bar.width
-            {
-                game.ball.dy *= -1.0;
-                game.score += 1;
+        // Ball-bar collision
+        if self.ball.y + BALL_SIZE >= self.bar.y
+            && self.ball.x + BALL_SIZE >= self.bar.x
+            && self.ball.x <= self.bar.x + self.bar.width
+        {
+            self.ball.dy *= -1.0;
+            self.score += 1;
 
-                // Milestone: Only award hearts if a high score exists
-                if game.score % 10 == 0 {
-                    if game.score > game.high_score {
-                        game.hearts += 1;
-                    }
-                    game.bar.width += 10.0;
-                }
-            }
-
-            // Ball falls off the screen
-            if game.ball.y > HEIGHT as f32 {
-                game.hearts -= 1;
-                if game.hearts == 0 {
-                    game.game_over = true;
-                    game.update_high_score();
-                } else {
-                    game.ball.y = HEIGHT as f32 / 3.0;
-                    game.ball.dy = BALL_SPEED;
-                }
-            }
-
-            // Bar movement
-            if window.is_key_down(Key::Left) && game.bar.x > 0.0 {
-                game.bar.x -= BAR_SPEED;
-            }
-            if window.is_key_down(Key::Right) && game.bar.x + game.bar.width < WIDTH as f32 {
-                game.bar.x += BAR_SPEED;
+            if self.score > self.high_score {
+                self.high_score = self.score;
+                self.hearts += 1;
+                self.milestone += 5;
             }
         }
 
-        // Draw ball
-        for i in 0..BALL_SIZE as usize {
-            for j in 0..BALL_SIZE as usize {
-                let x = (game.ball.x as usize + i).min(WIDTH - 1);
-                let y = (game.ball.y as usize + j).min(HEIGHT - 1);
-                buffer[y * WIDTH + x] = 0xFFFFFF;
+        // Ball falls off screen
+        if self.ball.y > HEIGHT {
+            self.hearts -= 1;
+            if self.hearts == 0 {
+                self.game_over = true;
+            } else {
+                self.reset();
             }
         }
 
-        // Draw bar
-        for i in 0..BAR_HEIGHT as usize {
-            for j in 0..game.bar.width as usize {
-                let x = (game.bar.x as usize + j).min(WIDTH - 1);
-                let y = (game.bar.y as usize + i).min(HEIGHT - 1);
-                buffer[y * WIDTH + x] = 0x00FF00;
+        // Bar movement
+        let keys = ggez::input::keyboard::pressed_keys(ctx);
+        if keys.contains(&KeyCode::Left) || keys.contains(&KeyCode::A) {
+            self.bar.x -= BAR_SPEED;
+            if self.bar.x < 0.0 {
+                self.bar.x = 0.0;
+            }
+        }
+        if keys.contains(&KeyCode::Right) || keys.contains(&KeyCode::D) {
+            self.bar.x += BAR_SPEED;
+            if self.bar.x + self.bar.width > WIDTH {
+                self.bar.x = WIDTH - self.bar.width;
             }
         }
 
-        // Update the window
-        window
-            .update_with_buffer(&buffer, WIDTH, HEIGHT)
-            .unwrap_or_else(|_| panic!("Failed to update buffer"));
+        Ok(())
     }
+
+    fn draw(&mut self, ctx: &mut Context) -> GameResult<()> {
+        graphics::clear(ctx, Color::BLACK);
+        
+
+        // Draw countdown
+        if self.countdown_value > 0 {
+            let countdown_text = Text::new((
+                format!("{}", self.countdown_value),
+                self.font,
+                // Scale::uniform(96.0),
+                TextFragment::scale(self, 96.0),
+            ));
+            let dimensions = countdown_text.dimensions(ctx);
+            graphics::draw(
+                ctx,
+                &countdown_text,
+                DrawParam::default().dest([
+                    WIDTH / 2.0 - dimensions.w / 2.0,
+                    HEIGHT / 2.0 - dimensions.h / 2.0,
+                ]),
+            )?;
+        } else {
+            // Draw the ball
+            let ball_rect = graphics::Rect::new(self.ball.x, self.ball.y, BALL_SIZE, BALL_SIZE);
+            let ball = graphics::Mesh::new_rectangle(
+                ctx,
+                graphics::DrawMode::fill(),
+                ball_rect,
+                Color::WHITE,
+            )?;
+            graphics::draw(ctx, &ball, DrawParam::default())?;
+
+            // Draw the bar
+            let bar_rect = graphics::Rect::new(self.bar.x, self.bar.y, self.bar.width, BAR_HEIGHT);
+            let bar = graphics::Mesh::new_rectangle(
+                ctx,
+                graphics::DrawMode::fill(),
+                bar_rect,
+                Color::GREEN,
+            )?;
+            graphics::draw(ctx, &bar, DrawParam::default())?;
+        }
+
+        graphics::present(ctx)
+    }
+
+    fn key_down_event(&mut self, ctx: &mut Context, keycode: KeyCode, _: KeyMods, _: bool) {
+        match keycode {
+            KeyCode::P | KeyCode::Space => self.toggle_pause(),
+            KeyCode::F => self.toggle_fullscreen(ctx),
+            KeyCode::R if self.game_over => self.reset(),
+            _ => {}
+        }
+    }
+}
+
+fn main() -> GameResult {
+    let (mut ctx, event_loop) = ContextBuilder::new("bounce_shield", "Your Name")
+        .default_conf(Conf::new().window_mode(WindowMode::default().dimensions(WIDTH, HEIGHT)))
+        .build()?;
+    let game = Game::new(&mut ctx)?;
+    event::run(ctx, event_loop, game)
 }
