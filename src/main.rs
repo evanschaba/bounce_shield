@@ -1,12 +1,13 @@
-use ggez::graphics::{Drawable, Font, Scale, Text, TextFragment};
+use ggez::graphics::{Drawable, Text, TextFragment};
 use ggez::{
     Context, ContextBuilder, GameResult,
-    conf::{Conf, WindowMode, WindowSetup},
-    event::{self, EventHandler, KeyCode, KeyMods},
+    conf::{Conf, WindowMode},
+    event::{self, EventHandler},
     graphics::{self, Color, DrawParam},
 };
 use rand::Rng;
 use std::time::{Duration, Instant};
+use ggez::input::keyboard::{KeyCode, KeyInput};
 
 const WIDTH: f32 = 800.0;
 const HEIGHT: f32 = 600.0;
@@ -17,11 +18,348 @@ const BAR_SPEED: f32 = 10.0;
 const BALL_SPEED: f32 = 5.0;
 const INITIAL_HEARTS: usize = 3;
 
+struct AnimatedText {
+    text: String,
+    start_time: Instant,
+    duration: Duration,
+    position: [f32; 2],
+    scale: f32,
+    color: Color,
+}
+
+impl AnimatedText {
+    fn new(text: String, position: [f32; 2], duration_secs: u64, scale: f32, color: Color) -> Self {
+        Self {
+            text,
+            start_time: Instant::now(),
+            duration: Duration::from_secs(duration_secs),
+            position,
+            scale,
+            color,
+        }
+    }
+
+    fn is_active(&self) -> bool {
+        Instant::now().duration_since(self.start_time) < self.duration
+    }
+}
+
+#[derive(PartialEq)]
+enum GameState {
+    Countdown,
+    Playing,
+    Paused,
+    GameOver,
+}
+
+struct Game {
+    ball: Ball,
+    bar: Bar,
+    score: usize,
+    high_score: usize,
+    hearts: usize,
+    state: GameState,
+    countdown_start: Option<Instant>,
+    countdown_value: i32,
+    fullscreen: bool,
+    animations: Vec<AnimatedText>,
+    first_start: bool,
+    prev_high_score: usize,
+}
+
+impl Game {
+    fn new(_ctx: &mut Context) -> GameResult<Self> {
+        let mut game = Self {
+            ball: Ball::new(),
+            bar: Bar::new(),
+            score: 0,
+            high_score: 0,
+            hearts: INITIAL_HEARTS,
+            state: GameState::Countdown,
+            countdown_start: Some(Instant::now()),
+            countdown_value: 3,
+            fullscreen: false,
+            animations: Vec::new(),
+            first_start: true,
+            prev_high_score: 0,
+        };
+        game.add_animation("Get Ready!".to_string(), [WIDTH/2.0, HEIGHT/2.0], 2, 72.0, Color::YELLOW);
+        Ok(game)
+    }
+
+    fn add_animation(&mut self, text: String, position: [f32; 2], duration_secs: u64, scale: f32, color: Color) {
+        self.animations.push(AnimatedText::new(text, position, duration_secs, scale, color));
+    }
+
+    fn reset(&mut self) {
+        self.ball = Ball::new();
+        self.bar = Bar::new();
+        self.score = 0;
+        self.hearts = INITIAL_HEARTS;
+        self.state = GameState::Countdown;
+        self.countdown_start = Some(Instant::now());
+        self.countdown_value = 3;
+        self.first_start = false;
+        self.add_animation("Get Ready!".to_string(), [WIDTH/2.0, HEIGHT/2.0], 2, 72.0, Color::YELLOW);
+    }
+
+    fn check_high_score(&mut self) {
+        if self.score > self.high_score {
+            if self.high_score > 0 {
+                self.add_animation(
+                    format!("New High Score: {}!", self.score),
+                    [WIDTH/2.0, HEIGHT/2.0],
+                    2,
+                    48.0,
+                    Color::YELLOW,
+                );
+            }
+            self.high_score = self.score;
+            
+            if !self.first_start && self.score > self.prev_high_score + 5 {
+                self.hearts += 1;
+                self.add_animation(
+                    "Extra Heart Awarded!".to_string(),
+                    [WIDTH/2.0, HEIGHT/2.0 - 50.0],
+                    2,
+                    36.0,
+                    Color::GREEN,
+                );
+                self.prev_high_score = self.score;
+            }
+        }
+    }
+}
+
+impl EventHandler for Game {
+    fn update(&mut self, ctx: &mut Context) -> GameResult<()> {
+        self.animations.retain(|anim| anim.is_active());
+
+        match self.state {
+            GameState::GameOver => return Ok(()),
+            GameState::Paused => return Ok(()),
+            GameState::Countdown => {
+                if let Some(start_time) = self.countdown_start {
+                    if Instant::now().duration_since(start_time) >= Duration::from_secs(1) {
+                        self.countdown_value -= 1;
+                        self.countdown_start = Some(Instant::now());
+                        if self.countdown_value == 0 {
+                            self.state = GameState::Playing;
+                            self.add_animation(
+                                "Game Start!".to_string(),
+                                [WIDTH/2.0, HEIGHT/2.0],
+                                2,
+                                72.0,
+                                Color::GREEN,
+                            );
+                            self.add_animation(
+                                "Press 'P' or SPACE to pause".to_string(),
+                                [WIDTH/2.0, HEIGHT/2.0 + 50.0],
+                                3,
+                                24.0,
+                                Color::WHITE,
+                            );
+                        }
+                    }
+                }
+                return Ok(());
+            }
+            GameState::Playing => {
+                self.ball.update();
+                
+                // Ball-wall collision
+                if self.ball.x <= 0.0 || self.ball.x + BALL_SIZE >= WIDTH {
+                    self.ball.dx *= -1.0;
+                }
+                if self.ball.y <= 0.0 {
+                    self.ball.dy *= -1.0;
+                }
+
+                // Ball-bar collision
+                if self.ball.y + BALL_SIZE >= self.bar.y
+                    && self.ball.x + BALL_SIZE >= self.bar.x
+                    && self.ball.x <= self.bar.x + self.bar.width
+                {
+                    self.ball.dy *= -1.0;
+                    self.score += 1;
+                    self.check_high_score();
+                }
+
+                // Ball falls off screen
+                if self.ball.y > HEIGHT {
+                    self.hearts -= 1;
+                    if self.hearts == 0 {
+                        self.state = GameState::GameOver;
+                        self.add_animation(
+                            "Game Over!".to_string(),
+                            [WIDTH/2.0, HEIGHT/2.0],
+                            999,
+                            72.0,
+                            Color::RED,
+                        );
+                        self.add_animation(
+                            "Press 'R' to retry".to_string(),
+                            [WIDTH/2.0, HEIGHT/2.0 + 50.0],
+                            999,
+                            36.0,
+                            Color::WHITE,
+                        );
+                    } else {
+                        self.add_animation(
+                            format!("Lost a heart! {} remaining", self.hearts),
+                            [WIDTH/2.0, HEIGHT/2.0],
+                            2,
+                            48.0,
+                            Color::RED,
+                        );
+                        self.ball = Ball::new();
+                    }
+                }
+
+                // Bar movement
+                let keys = ctx.keyboard.pressed_keys();
+                if keys.contains(&KeyCode::Left) || keys.contains(&KeyCode::A) {
+                    self.bar.move_left();
+                }
+                if keys.contains(&KeyCode::Right) || keys.contains(&KeyCode::D) {
+                    self.bar.move_right();
+                }
+            }
+        }
+
+        Ok(())
+    }
+
+    fn draw(&mut self, ctx: &mut Context) -> GameResult<()> {
+        let mut canvas = graphics::Canvas::from_frame(ctx, Color::BLACK);
+
+        // Draw score and lives (top left)
+        let score_text = Text::new(
+            TextFragment::new(format!("Score: {}\nHearts: {}\nHigh Score: {}", 
+                self.score, self.hearts, self.high_score
+            )).scale(24.0)
+        );
+        score_text.draw(&mut canvas, DrawParam::default().dest([20.0, 20.0]));
+
+        // Draw controls (top right)
+        let controls_text = Text::new(
+            TextFragment::new("Controls:\nF - Fullscreen\nP/Space - Pause\nR - Retry")
+                .scale(20.0)
+        );
+        controls_text.draw(&mut canvas, DrawParam::default().dest([WIDTH - 200.0, 20.0]));
+
+        // Draw countdown or game elements
+        if self.state == GameState::Countdown {
+            let countdown_text = Text::new(
+                TextFragment::new(format!("{}", self.countdown_value))
+                    .scale(96.0)
+                    .color(Color::YELLOW)
+            );
+            let dims = countdown_text.dimensions(ctx).unwrap();
+            countdown_text.draw(
+                &mut canvas,
+                DrawParam::default().dest([WIDTH/2.0 - dims.w/2.0, HEIGHT/2.0 - dims.h/2.0]),
+            );
+        } else {
+            // Draw game objects
+            let ball_rect = graphics::Rect::new(self.ball.x, self.ball.y, BALL_SIZE, BALL_SIZE);
+            let ball = graphics::Mesh::new_rectangle(
+                ctx,
+                graphics::DrawMode::fill(),
+                ball_rect,
+                Color::WHITE,
+            )?;
+            ball.draw(&mut canvas, DrawParam::default());
+
+            let bar_rect = graphics::Rect::new(self.bar.x, self.bar.y, self.bar.width, BAR_HEIGHT);
+            let bar = graphics::Mesh::new_rectangle(
+                ctx,
+                graphics::DrawMode::fill(),
+                bar_rect,
+                Color::GREEN,
+            )?;
+            bar.draw(&mut canvas, DrawParam::default());
+        }
+
+        // Draw animations
+        for anim in &self.animations {
+            let text = Text::new(
+                TextFragment::new(&anim.text)
+                    .scale(anim.scale)
+                    .color(anim.color)
+            );
+            let dims = text.dimensions(ctx).unwrap();
+            text.draw(
+                &mut canvas,
+                DrawParam::default().dest([
+                    anim.position[0] - dims.w/2.0,
+                    anim.position[1] - dims.h/2.0,
+                ]),
+            );
+        }
+
+        canvas.finish(ctx)?;
+        Ok(())
+    }
+
+    fn key_down_event(&mut self, ctx: &mut Context, key_input: KeyInput, _repeat: bool) -> GameResult {
+        match key_input.keycode {
+            Some(KeyCode::P) | Some(KeyCode::Space) => {
+                if self.state == GameState::Playing {
+                    self.state = GameState::Paused;
+                    self.add_animation(
+                        "PAUSED".to_string(),
+                        [WIDTH/2.0, HEIGHT/2.0],
+                        999,
+                        72.0,
+                        Color::YELLOW,
+                    );
+                } else if self.state == GameState::Paused {
+                    self.state = GameState::Playing;
+                    self.animations.clear();
+                }
+            }
+            Some(KeyCode::F) => {
+                self.fullscreen = !self.fullscreen;
+                let mode = if self.fullscreen {
+                    WindowMode::default().fullscreen_type(ggez::conf::FullscreenType::True)
+                } else {
+                    WindowMode::default().fullscreen_type(ggez::conf::FullscreenType::Windowed)
+                };
+                ctx.gfx.set_mode(mode).expect("Failed to toggle fullscreen");
+            }
+            Some(KeyCode::R) if self.state == GameState::GameOver => {
+                self.prev_high_score = self.high_score;
+                self.reset();
+            }
+            _ => {}
+        }
+        Ok(())
+    }
+}
+
 struct Ball {
     x: f32,
     y: f32,
     dx: f32,
     dy: f32,
+}
+
+impl Ball {
+    fn new() -> Self {
+        let mut rng = rand::thread_rng();
+        Self {
+            x: rng.gen_range(BALL_SIZE..WIDTH - BALL_SIZE),
+            y: HEIGHT / 3.0,
+            dx: if rng.gen_bool(0.5) { BALL_SPEED } else { -BALL_SPEED },
+            dy: BALL_SPEED,
+        }
+    }
+
+    fn update(&mut self) {
+        self.x += self.dx;
+        self.y += self.dy;
+    }
 }
 
 struct Bar {
@@ -30,217 +368,26 @@ struct Bar {
     width: f32,
 }
 
-struct Game {
-    ball: Ball,
-    bar: Bar,
-    score: usize,
-    high_score: usize,
-    milestone: usize,
-    hearts: usize,
-    game_over: bool,
-    paused: bool,
-    font: Font,
-    countdown_start: Option<Instant>,
-    countdown_value: i32,
-    fullscreen: bool,
-}
-
-impl Game {
-    fn new(ctx: &mut Context) -> GameResult<Self> {
-        let mut rng = rand::thread_rng();
-        let font = Font::default();
-        Ok(Self {
-            ball: Ball {
-                x: rng.gen_range(BALL_SIZE..WIDTH - BALL_SIZE),
-                y: HEIGHT / 3.0,
-                dx: if rng.gen_bool(0.5) {
-                    BALL_SPEED
-                } else {
-                    -BALL_SPEED
-                },
-                dy: BALL_SPEED,
-            },
-            bar: Bar {
-                x: (WIDTH - BAR_WIDTH) / 2.0,
-                y: HEIGHT - BAR_HEIGHT - 10.0,
-                width: BAR_WIDTH,
-            },
-            score: 0,
-            high_score: 0,
-            milestone: 10,
-            hearts: INITIAL_HEARTS,
-            game_over: false,
-            paused: false,
-            font,
-            countdown_start: Some(Instant::now()),
-            countdown_value: 5,
-            fullscreen: false,
-        })
-    }
-
-    fn reset(&mut self) {
-        let mut rng = rand::thread_rng();
-        self.ball.x = rng.gen_range(BALL_SIZE..WIDTH - BALL_SIZE);
-        self.ball.y = HEIGHT / 3.0;
-        self.ball.dx = if rng.gen_bool(0.5) {
-            BALL_SPEED
-        } else {
-            -BALL_SPEED
-        };
-        self.ball.dy = BALL_SPEED;
-        self.score = 0;
-        self.hearts = INITIAL_HEARTS;
-        self.game_over = false;
-        self.countdown_start = Some(Instant::now());
-        self.countdown_value = 5;
-    }
-
-    fn toggle_pause(&mut self) {
-        self.paused = !self.paused;
-    }
-
-    fn toggle_fullscreen(&mut self, ctx: &mut Context) {
-        self.fullscreen = !self.fullscreen;
-        let mode = if self.fullscreen {
-            WindowMode::default().fullscreen_type(ggez::conf::FullscreenType::True)
-        } else {
-            WindowMode::default().fullscreen_type(ggez::conf::FullscreenType::Windowed)
-        };
-        ggez::graphics::set_mode(ctx, mode).expect("Failed to toggle fullscreen");
-    }
-
-    fn update_countdown(&mut self) {
-        if let Some(start_time) = self.countdown_start {
-            if Instant::now().duration_since(start_time) >= Duration::from_secs(1) {
-                self.countdown_value -= 1;
-                self.countdown_start = Some(Instant::now());
-            }
+impl Bar {
+    fn new() -> Self {
+        Self {
+            x: (WIDTH - BAR_WIDTH) / 2.0,
+            y: HEIGHT - BAR_HEIGHT - 10.0,
+            width: BAR_WIDTH,
         }
     }
-}
 
-impl EventHandler for Game {
-    fn update(&mut self, ctx: &mut Context) -> GameResult<()> {
-        if self.game_over {
-            return Ok(());
+    fn move_left(&mut self) {
+        self.x -= BAR_SPEED;
+        if self.x < 0.0 {
+            self.x = 0.0;
         }
-
-        if self.countdown_value > 0 {
-            self.update_countdown();
-            return Ok(());
-        }
-
-        if self.paused {
-            return Ok(());
-        }
-
-        // Ball movement
-        self.ball.x += self.ball.dx;
-        self.ball.y += self.ball.dy;
-
-        // Ball-wall collision
-        if self.ball.x <= 0.0 || self.ball.x + BALL_SIZE >= WIDTH {
-            self.ball.dx *= -1.0;
-        }
-        if self.ball.y <= 0.0 {
-            self.ball.dy *= -1.0;
-        }
-
-        // Ball-bar collision
-        if self.ball.y + BALL_SIZE >= self.bar.y
-            && self.ball.x + BALL_SIZE >= self.bar.x
-            && self.ball.x <= self.bar.x + self.bar.width
-        {
-            self.ball.dy *= -1.0;
-            self.score += 1;
-
-            if self.score > self.high_score {
-                self.high_score = self.score;
-                self.hearts += 1;
-                self.milestone += 5;
-            }
-        }
-
-        // Ball falls off screen
-        if self.ball.y > HEIGHT {
-            self.hearts -= 1;
-            if self.hearts == 0 {
-                self.game_over = true;
-            } else {
-                self.reset();
-            }
-        }
-
-        // Bar movement
-        let keys = ggez::input::keyboard::pressed_keys(ctx);
-        if keys.contains(&KeyCode::Left) || keys.contains(&KeyCode::A) {
-            self.bar.x -= BAR_SPEED;
-            if self.bar.x < 0.0 {
-                self.bar.x = 0.0;
-            }
-        }
-        if keys.contains(&KeyCode::Right) || keys.contains(&KeyCode::D) {
-            self.bar.x += BAR_SPEED;
-            if self.bar.x + self.bar.width > WIDTH {
-                self.bar.x = WIDTH - self.bar.width;
-            }
-        }
-
-        Ok(())
     }
 
-    fn draw(&mut self, ctx: &mut Context) -> GameResult<()> {
-        graphics::clear(ctx, Color::BLACK);
-        
-
-        // Draw countdown
-        if self.countdown_value > 0 {
-            let countdown_text = Text::new((
-                format!("{}", self.countdown_value),
-                self.font,
-                // Scale::uniform(96.0),
-                TextFragment::scale(self, 96.0),
-            ));
-            let dimensions = countdown_text.dimensions(ctx);
-            graphics::draw(
-                ctx,
-                &countdown_text,
-                DrawParam::default().dest([
-                    WIDTH / 2.0 - dimensions.w / 2.0,
-                    HEIGHT / 2.0 - dimensions.h / 2.0,
-                ]),
-            )?;
-        } else {
-            // Draw the ball
-            let ball_rect = graphics::Rect::new(self.ball.x, self.ball.y, BALL_SIZE, BALL_SIZE);
-            let ball = graphics::Mesh::new_rectangle(
-                ctx,
-                graphics::DrawMode::fill(),
-                ball_rect,
-                Color::WHITE,
-            )?;
-            graphics::draw(ctx, &ball, DrawParam::default())?;
-
-            // Draw the bar
-            let bar_rect = graphics::Rect::new(self.bar.x, self.bar.y, self.bar.width, BAR_HEIGHT);
-            let bar = graphics::Mesh::new_rectangle(
-                ctx,
-                graphics::DrawMode::fill(),
-                bar_rect,
-                Color::GREEN,
-            )?;
-            graphics::draw(ctx, &bar, DrawParam::default())?;
-        }
-
-        graphics::present(ctx)
-    }
-
-    fn key_down_event(&mut self, ctx: &mut Context, keycode: KeyCode, _: KeyMods, _: bool) {
-        match keycode {
-            KeyCode::P | KeyCode::Space => self.toggle_pause(),
-            KeyCode::F => self.toggle_fullscreen(ctx),
-            KeyCode::R if self.game_over => self.reset(),
-            _ => {}
+    fn move_right(&mut self) {
+        self.x += BAR_SPEED;
+        if self.x + self.width > WIDTH {
+            self.x = WIDTH - self.width;
         }
     }
 }
