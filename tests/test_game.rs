@@ -50,22 +50,3 @@ fn test_score_increment() {
     // Assert the score has increased
     assert_eq!(game.score, initial_score + 1);
 }
-
-// #[test]
-// fn test_score_increment() -> Result<(), Box<dyn std::error::Error>> {
-//     let mut ctx = create_mock_context()?;
-
-//     // Initialize game
-//     let mut game = Game::new(&mut ctx)?;
-
-//     // Check the initial score
-//     let initial_score = game.score;
-
-//     // Increment the score
-//     game.score += 1;
-
-//     // Assert the score has increased
-//     assert_eq!(game.score, initial_score + 1);
-
-//     Ok(())
-// }
