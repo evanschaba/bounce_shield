@@ -12,7 +12,7 @@ use rand::Rng;
 use std::time::{Duration, Instant};
 
 pub const WIDTH: f32 = 800.0;
-pub const HEIGHT: f32 = 600.0;
+pub const HEIGHT: f32 = 800.0;
 pub const BALL_SIZE: f32 = 20.0;
 pub const BAR_WIDTH: f32 = 150.0;
 pub const BAR_HEIGHT: f32 = 20.0;
