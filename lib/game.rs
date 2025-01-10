@@ -130,7 +130,6 @@ impl Game {
             color,
         ));
     }
-
     pub fn reset(&mut self) {
         self.ball = Ball::new();
         self.bar = Bar::new();
@@ -140,10 +139,11 @@ impl Game {
         self.countdown_start = Some(Instant::now());
         self.countdown_value = 3;
         self.first_start = false;
+        self.animations.clear(); // Clear all animations
         self.add_animation(
             "Get Ready!".to_string(),
-            [WIDTH / 2.0, HEIGHT / 2.0],
-            2,
+            [WIDTH / 2.0, HEIGHT / 2.0 - 50.0], // Adjusted position
+            1,
             72.0,
             Color::CYAN,
         );
@@ -151,10 +151,11 @@ impl Game {
 
     pub fn check_high_score(&mut self) {
         if self.score > self.high_score {
+            self.animations.clear(); // Clear previous animations
             if self.high_score > 0 {
                 self.add_animation(
                     format!("New High Score: {}!", self.score),
-                    [WIDTH / 2.0, HEIGHT / 2.0],
+                    [WIDTH / 2.0, HEIGHT / 2.0 - 70.0], // Adjusted position
                     2,
                     48.0,
                     Color::CYAN,
@@ -166,7 +167,7 @@ impl Game {
                 self.hearts += 1;
                 self.add_animation(
                     "Extra Heart Awarded!".to_string(),
-                    [WIDTH / 2.0, HEIGHT / 2.0 - 50.0],
+                    [WIDTH / 2.0, HEIGHT / 2.0 - 120.0], // Adjusted position
                     2,
                     36.0,
                     Color::GREEN,
@@ -198,18 +199,19 @@ impl Game {
         // Ball falls off screen
         if self.ball.y > HEIGHT {
             self.hearts -= 1;
+            self.animations.clear(); // Clear existing animations
             if self.hearts == 0 {
                 self.state = GameState::GameOver;
                 self.add_animation(
                     "Game Over!".to_string(),
-                    [WIDTH / 2.0, HEIGHT / 2.0],
+                    [WIDTH / 2.0, HEIGHT / 2.0 - 50.0], // Adjusted position
                     999,
                     72.0,
                     Color::RED,
                 );
                 self.add_animation(
                     "Press 'R' to retry".to_string(),
-                    [WIDTH / 2.0, HEIGHT / 2.0 + 50.0],
+                    [WIDTH / 2.0, HEIGHT / 2.0 + 50.0], // Adjusted position
                     999,
                     36.0,
                     Color::WHITE,
@@ -217,7 +219,7 @@ impl Game {
             } else {
                 self.add_animation(
                     format!("Lost a heart! {} remaining", self.hearts),
-                    [WIDTH / 2.0, HEIGHT / 2.0],
+                    [WIDTH / 2.0, HEIGHT / 2.0], // Adjusted position
                     2,
                     48.0,
                     Color::RED,
@@ -240,7 +242,7 @@ impl Game {
 
 impl EventHandler for Game {
     fn update(&mut self, ctx: &mut Context) -> GameResult<()> {
-        self.animations.retain(|anim| anim.is_active());
+        self.animations.retain(|anim| anim.is_active()); // Retain only active animations
 
         match self.state {
             GameState::GameOver => return Ok(()),
@@ -250,18 +252,31 @@ impl EventHandler for Game {
                     if Instant::now().duration_since(start_time) >= Duration::from_secs(1) {
                         self.countdown_value -= 1;
                         self.countdown_start = Some(Instant::now());
-                        if self.countdown_value == 0 {
+                        // Add countdown animation without clearing existing ones
+                        if self.countdown_value > 0 {
+                            self.animations.clear(); // Clear only before adding "Game Start!" ??
+
+                            self.add_animation(
+                                format!("{}", self.countdown_value),
+                                [WIDTH / 2.0, HEIGHT / 2.0 - 100.0], // Adjusted position
+                                1,
+                                96.0,
+                                Color::CYAN,
+                            );
+                            self.animations.clear(); // Clear only before adding "Game Start!" ??
+                        } else {
                             self.state = GameState::Playing;
+                            self.animations.clear(); // Clear only before adding "Game Start!"
                             self.add_animation(
                                 "Game Start!".to_string(),
-                                [WIDTH / 2.0, HEIGHT / 2.0],
+                                [WIDTH / 2.0, HEIGHT / 2.0 - 50.0], // Adjusted position
                                 2,
                                 72.0,
                                 Color::GREEN,
                             );
                             self.add_animation(
                                 "Press 'P' or SPACE to pause".to_string(),
-                                [WIDTH / 2.0, HEIGHT / 2.0 + 50.0],
+                                [WIDTH / 2.0, HEIGHT / 2.0 + 50.0], // Adjusted position
                                 3,
                                 24.0,
                                 Color::WHITE,
@@ -280,8 +295,8 @@ impl EventHandler for Game {
 
         Ok(())
     }
-
     fn draw(&mut self, ctx: &mut Context) -> GameResult<()> {
+        // Clear the screen with a black background to remove previous frames
         let mut canvas = graphics::Canvas::from_frame(ctx, Color::BLACK);
 
         // Draw score and lives (top left)
@@ -354,6 +369,7 @@ impl EventHandler for Game {
             );
         }
 
+        // Finish and present the frame
         canvas.finish(ctx)?;
         Ok(())
     }

@@ -39,6 +39,12 @@ The task is to create a simple ball-and-bar game where the player controls a bar
 ***The "Game Retry" screen after recording highscore.***
 ![game retry](docs/assets/screenshots/game_retry.png)
 
+***The "Game lose heart" screen after recording highscore.***
+![game retry](docs/assets/screenshots/game_count_down.png)
+
+***The "Game lose heart" screen after recording highscore.***
+![game retry](docs/assets/screenshots/game_lose_heart.png)
+
 ### Planned Features
 
 [**coming soon**](docs/todo.md)

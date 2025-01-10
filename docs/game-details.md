@@ -2,59 +2,90 @@
 
 ## Overview
 
-**bounce_shield** is an engaging and simple arcade game where the player controls a bar to bounce a ball and prevent it from falling off the screen. The game includes a basic scoring system, hearts that represent lives, and milestones that grant the player more hearts or increase the size of the bar for added challenge.
+**bounce_shield** is an exciting arcade-style game where players control a bar to bounce a ball, aiming to keep it in play and score points. The game includes a scoring system, a lives mechanic represented by hearts, and dynamic animations to enhance the experience.  
 
-## Features
+The goal is to keep the ball from falling off the screen while achieving high scores and unlocking rewards like extra hearts for milestones. With animated text effects and responsive gameplay, **bounce_shield** delivers a fun and engaging experience.  
 
-- **Ball Movement**: The ball bounces off the screen walls and the player's bar. It moves at a fixed speed, but future versions may include random speed changes or quirky behaviors.
-- **Bar Movement**: The player controls a bar at the bottom of the screen using the **left** and **right** arrow keys.
-- **Score System**: The player earns points by bouncing the ball off the bar. Milestones are used to grant extra hearts and increase the bar size.
-- **Hearts**: The player starts with 3 hearts. Each time the ball falls off the screen, a heart is lost. If all hearts are lost, the game ends.
-- **Game Over**: The game will display a "GAME OVER" screen when the player runs out of hearts, and they can press **R** to restart the game.
+## Features  
 
-## Current Mechanics
+### Core Mechanics  
 
-- **Ball Bounces** off the walls and bar, with the ball's speed and direction changing upon collision.
-- **Player Bar** can be moved left and right to keep the ball in play.
-- **Score** is displayed and increases each time the ball hits the bar.
-- **Hearts** are represented as a counter, and are reduced when the ball falls off the screen.
-- **Milestones** trigger additional hearts and bar size increases after a certain score is reached.
+- **Ball Movement**:  
+  The ball moves at a fixed speed, bouncing off the walls and the player's bar. Randomized initial directions add variety to gameplay.  
 
-## Future Improvements
+- **Bar Movement**:  
+  Control the bar using **Left** and **Right** arrow keys (or **A** and **D**). The bar moves smoothly and stops at screen edges.  
 
-- **User Management & Leaderboard**:
-    - A UI to manage player profiles and show high scores.
-    - A self-hosted backend API to track scores and players.
+- **Score System**:  
+  Earn points with every successful bounce off the bar.  
+  - The score resets when the game restarts.  
+  - If the score exceeds the previous high score by 5 points, the player earns an extra heart.  
 
-- **Animated Collision Effects**:
-    - Add visual effects for ball and bar collisions, such as screen shake or flashing colors.
+- **Lives (Hearts)**:  
+  Players start with **3 hearts**. Each time the ball falls off the screen, a heart is lost. Losing all hearts results in **Game Over**.  
 
-- **Ball Quirks**:
-    - Introduce random behaviors, like dimming the ball to make it harder to follow, or turning some walls into warp gates to add a twist to gameplay.
+- **Game States**:  
+  - **Countdown**: A brief countdown ("3, 2, 1, Go!") before gameplay starts.  
+  - **Playing**: The main gameplay mode.  
+  - **Paused**: Pause the game with **P** or **Spacebar**.  
+  - **Game Over**: Displays a "Game Over" animation when all hearts are lost.  
 
-- **Color & Visual Enhancements**:
-    - Add more colorful visuals to enhance the overall look and feel of the game.
+### Animations  
 
-- **Power-ups**:
-    - Implement power-ups such as extra hearts or speed boosts to make the gameplay more dynamic.
+- **Text Animations**:  
+  Key messages (e.g., "Game Start!", "New High Score!", "Extra Heart Awarded!") are displayed with vibrant colors and fade after a short duration.  
 
-## Technical Details
+- **Game Over Screen**:  
+  Displays "Game Over!" and a message to retry using **R**.  
 
-- **Game Engine**: Built with [macroquad](https://github.com/not-fl3/macroquad), a Rust game engine for fast prototyping.
-- **Controls**:
-    - **Left Arrow**: Move the bar left.
-    - **Right Arrow**: Move the bar right.
-    - **R**: Restart the game after game over.
+### Controls  
 
-## Planned Features
+- **Arrow Keys / A, D**: Move the bar left or right.  
+- **P or Spacebar**: Pause or resume gameplay.  
+- **F**: Toggle fullscreen mode.  
+- **R**: Restart after a Game Over.  
 
-- **UI Interface** for managing user profiles and showing high scores.
-- **Animated Effects** for ball-bar collisions and other game events.
-- **Quirky Ball Behavior** to add more unpredictability to the game.
-- **Multiplayer Mode** or **Online Leaderboards** in the future.
+## Current Implementation  
+
+- **Score Milestones**:  
+  - Extra hearts are awarded when players surpass their previous high score by 5 points.  
+  - Visual feedback is provided with animations like "Extra Heart Awarded!" or "New High Score!"  
+
+- **Bar and Ball Collision**:  
+  - The ball's direction changes dynamically based on its collision with the bar.  
+  - Visual feedback and scoring make gameplay satisfying and interactive.  
+
+- **Dynamic Countdown**:  
+  A countdown appears at the beginning of each game to prepare the player.  
+
+- **Visual Indicators**:  
+  Score, hearts, and high score are displayed on-screen. Controls are shown in the top-right corner.  
+
+## Planned Improvements  
+
+1. **Enhanced Visual Effects**:  
+   - Add collision effects like particle bursts or screen shakes.  
+
+2. **Quirky Ball Behavior**:  
+   - Introduce random ball behaviors, like speed boosts, changes in size, or warp gates at screen edges.  
+
+3. **Power-ups**:  
+   - Implement collectable power-ups, such as extra hearts or temporary bar enhancements.  
+
+4. **User Profiles & Leaderboard**:  
+   - Add support for player profiles and high-score tracking using a backend API.  
+
+5. **Multiplayer Mode**:  
+   - Explore a cooperative or competitive mode with another player.  
+
+6. **UI Enhancements**:  
+   - Improve in-game menus and overlays for a polished experience.  
+
+7. **Sound Effects**:  
+   - Add feedback for ball-bar collisions, score increases, and power-ups.  
 
 ---
 
-© 2024 [Your Name]. All rights reserved.
+© 2025 [Your Name]. All rights reserved.  
 
-This software is released under the Unlicense. See the [UNLICENSE](LICENSE) for details.
+This software is released under the Unlicense. See the [UNLICENSE](LICENSE) for details.  
