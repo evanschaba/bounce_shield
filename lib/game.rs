@@ -26,12 +26,12 @@ pub const POWERUP_SPAWN_CHANCE: f32 = 0.01;
 pub const POWERUP_DURATION: Duration = Duration::from_secs(10);
 
 // Audio paths
-pub const AUDIO_PATH_GAME_BOUNCE: &str = "/audio/game_bounce.wav";
-pub const AUDIO_PATH_GAME_HEART: &str = "/audio/game_heart.wav";
-pub const AUDIO_PATH_GAME_START: &str = "/audio/game_start.wav";
-pub const AUDIO_PATH_GAME_OVER: &str = "/audio/game_over.wav";
-pub const AUDIO_PATH_GAME_TUNE: &str = "/audio/game_tune.wav";
-pub const AUDIO_PATH_GAME_POWERUP: &str = "/audio/game_powerup.wav";
+pub const AUDIO_PATH_GAME_BOUNCE: &str = "/game_bounce.wav";
+pub const AUDIO_PATH_GAME_HEART: &str = "/game_heart.wav";
+pub const AUDIO_PATH_GAME_START: &str = "/game_start.wav";
+pub const AUDIO_PATH_GAME_OVER: &str = "/game_over.wav";
+pub const AUDIO_PATH_GAME_TUNE: &str = "/game_tune.wav";
+pub const AUDIO_PATH_GAME_POWERUP: &str = "/game_powerup.wav";
 
 #[derive(Clone, Copy, PartialEq)]
 enum PowerUpType {
@@ -666,7 +666,7 @@ pub fn create_game_ctx() -> Result<(Context, ggez::event::EventLoop<()>), Box<dy
     let mode = Conf::new().window_mode(WindowMode::default().dimensions(WIDTH, HEIGHT));
     let (ctx, event_loop) = ContextBuilder::new("bounce_shield", "🏐")
         .default_conf(mode)
-        .add_resource_path("docs/assets")
+        .add_resource_path("docs/assets/audio")
         .build()?;
     Ok((ctx, event_loop))
 }
