@@ -13,25 +13,25 @@ use rand::Rng;
 use std::time::{Duration, Instant};
 
 // Constants
-const WIDTH: f32 = 1920.0;
-const HEIGHT: f32 = 1080.0;
-const BALL_SIZE: f32 = 20.0;
-const BAR_WIDTH: f32 = 150.0;
-const BAR_HEIGHT: f32 = 20.0;
-const INITIAL_BAR_SPEED: f32 = 10.0;
-const INITIAL_BALL_SPEED: f32 = 5.0;
-const INITIAL_HEARTS: usize = 3;
-const DIFFICULTY_INCREASE_INTERVAL: usize = 5;
-const POWERUP_SPAWN_CHANCE: f32 = 0.01;
-const POWERUP_DURATION: Duration = Duration::from_secs(10);
+pub const WIDTH: f32 = 1920.0;
+pub const HEIGHT: f32 = 1080.0;
+pub const BALL_SIZE: f32 = 20.0;
+pub const BAR_WIDTH: f32 = 150.0;
+pub const BAR_HEIGHT: f32 = 20.0;
+pub const INITIAL_BAR_SPEED: f32 = 10.0;
+pub const INITIAL_BALL_SPEED: f32 = 5.0;
+pub const INITIAL_HEARTS: usize = 3;
+pub const DIFFICULTY_INCREASE_INTERVAL: usize = 5;
+pub const POWERUP_SPAWN_CHANCE: f32 = 0.01;
+pub const POWERUP_DURATION: Duration = Duration::from_secs(10);
 
 // Audio paths
-const AUDIO_PATH_GAME_BOUNCE: &str = "docs/assets/audio/game_bounce.wav";
-const AUDIO_PATH_GAME_HEART: &str = "docs/assets/audio/game_heart.wav";
-const AUDIO_PATH_GAME_START: &str = "docs/assets/audio/game_start.wav";
-const AUDIO_PATH_GAME_OVER: &str = "docs/assets/audio/game_over.wav";
-const AUDIO_PATH_GAME_TUNE: &str = "docs/assets/audio/game_tune.wav";
-const AUDIO_PATH_GAME_POWERUP: &str = "docs/assets/audio/game_powerup.wav";
+pub const AUDIO_PATH_GAME_BOUNCE: &str = "/audio/game_bounce.wav";
+pub const AUDIO_PATH_GAME_HEART: &str = "/audio/game_heart.wav";
+pub const AUDIO_PATH_GAME_START: &str = "/audio/game_start.wav";
+pub const AUDIO_PATH_GAME_OVER: &str = "/audio/game_over.wav";
+pub const AUDIO_PATH_GAME_TUNE: &str = "/audio/game_tune.wav";
+pub const AUDIO_PATH_GAME_POWERUP: &str = "/audio/game_powerup.wav";
 
 #[derive(Clone, Copy, PartialEq)]
 enum PowerUpType {
@@ -41,7 +41,7 @@ enum PowerUpType {
     SlowBall,
 }
 
-struct PowerUp {
+pub struct PowerUp {
     x: f32,
     y: f32,
     power_type: PowerUpType,
@@ -196,11 +196,11 @@ impl Game {
         };
 
         if let Some(sound) = &mut game.start_sound {
-            let _ = sound.play_detached(ctx);
+            let _ = sound.play(ctx);
         }
 
         if let Some(music) = &mut game.background_music {
-            let _ = music.play_detached(ctx);
+            let _ = music.play(ctx);
         }
 
         game.add_start_animation();
@@ -218,30 +218,9 @@ impl Game {
         ));
     }
 
-    fn apply_power_up(&mut self, power_up: &PowerUp, ctx: &Context) {
-        match power_up.power_type {
-            PowerUpType::WidthIncrease => {
-                self.bar.width *= 1.5;
-            }
-            PowerUpType::SpeedBoost => {
-                self.bar.speed *= 1.5;
-            }
-            PowerUpType::ExtraHeart => {
-                self.hearts += 1;
-            }
-            PowerUpType::SlowBall => {
-                self.ball.speed_multiplier *= 0.75;
-            }
-        }
-
-        if let Some(sound) = &mut self.powerup_sound {
-            let _ = sound.play_detached(ctx);
-        }
-    }
-
     fn spawn_power_up(&mut self) {
         let mut rng = rand::thread_rng();
-        if rng.gen::<f32>() < POWERUP_SPAWN_CHANCE {
+        if rng.r#gen::<f32>() < POWERUP_SPAWN_CHANCE {
             let power_type = match rng.gen_range(0..4) {
                 0 => PowerUpType::WidthIncrease,
                 1 => PowerUpType::SpeedBoost,
@@ -273,7 +252,7 @@ impl Game {
         self.add_start_animation();
 
         if let Some(sound) = &mut self.start_sound {
-            let _ = sound.play_detached(ctx);
+            let _ = sound.play(ctx);
         }
     }
 
@@ -292,7 +271,7 @@ impl Game {
             if !self.first_start && self.score > self.prev_high_score + 5 {
                 self.hearts += 1;
                 if let Some(sound) = &mut self.heart_sound {
-                    let _ = sound.play_detached(ctx);
+                    let _ = sound.play(ctx);
                 }
                 self.animations.push(AnimatedText::new(
                     "+1 Heart!".to_string(),
@@ -307,8 +286,8 @@ impl Game {
     }
 
     fn handle_bar_movement(&mut self, ctx: &Context) {
-        let keyboard = ctx.keyboard;
-        
+        let keyboard = &ctx.keyboard.clone();
+
         if keyboard.is_key_pressed(KeyCode::Left) || keyboard.is_key_pressed(KeyCode::A) {
             self.bar.move_left();
         }
@@ -334,7 +313,7 @@ impl Game {
         {
             self.ball.dy = -self.ball.dy;
             self.score += 1;
-            
+
             // Update combo
             let hit_time = Instant::now();
             if hit_time.duration_since(self.last_hit_time) < Duration::from_secs(2) {
@@ -346,7 +325,7 @@ impl Game {
 
             // Play sound
             if let Some(sound) = &mut self.hit_sound {
-                let _ = sound.play_detached(ctx);
+                let _ = sound.play(ctx);
             }
 
             self.check_high_score(ctx);
@@ -366,7 +345,7 @@ impl Game {
             self.animations.clear();
             if self.hearts == 0 {
                 if let Some(sound) = &mut self.game_over_sound {
-                    let _ = sound.play_detached(ctx);
+                    let _ = sound.play(ctx);
                 }
                 self.state = GameState::GameOver;
                 self.animations.push(AnimatedText::new(
@@ -392,22 +371,44 @@ impl Game {
         }
 
         // Power-up collisions
-        self.power_ups.retain_mut(|power_up| {
+        let mut power_ups_to_apply = Vec::new();
+        for power_up in &mut self.power_ups {
             let collided = self.ball.x < power_up.x + power_up.size
                 && self.ball.x + BALL_SIZE > power_up.x
                 && self.ball.y < power_up.y + power_up.size
                 && self.ball.y + BALL_SIZE > power_up.y;
 
             if collided {
-                self.apply_power_up(power_up, ctx);
                 power_up.active_until = Some(Instant::now() + POWERUP_DURATION);
+                power_ups_to_apply.push(power_up.power_type);
             }
+        }
 
-            power_up.is_active()
-        });
+        // Process collisions
+        for power_type in power_ups_to_apply {
+            match power_type {
+                PowerUpType::WidthIncrease => {
+                    self.bar.width *= 1.5;
+                }
+                PowerUpType::SpeedBoost => {
+                    self.bar.speed *= 1.5;
+                }
+                PowerUpType::ExtraHeart => {
+                    self.hearts += 1;
+                }
+                PowerUpType::SlowBall => {
+                    self.ball.speed_multiplier *= 0.75;
+                }
+            }
+            if let Some(sound) = &mut self.powerup_sound {
+                let _ = sound.play(ctx);
+            }
+        }
+
+        // Remove inactive power-ups
+        self.power_ups.retain(|power_up| power_up.is_active());
     }
-} 
-
+}
 
 impl EventHandler for Game {
     fn update(&mut self, ctx: &mut Context) -> GameResult<()> {
@@ -660,10 +661,12 @@ impl Bar {
     }
 }
 
-pub fn create_game_ctx() -> Result<(Context, ggez::event::EventLoop<()>), Box<dyn std::error::Error>> {
+pub fn create_game_ctx() -> Result<(Context, ggez::event::EventLoop<()>), Box<dyn std::error::Error>>
+{
     let mode = Conf::new().window_mode(WindowMode::default().dimensions(WIDTH, HEIGHT));
     let (ctx, event_loop) = ContextBuilder::new("bounce_shield", "🏐")
         .default_conf(mode)
+        .add_resource_path("docs/assets")
         .build()?;
     Ok((ctx, event_loop))
 }
