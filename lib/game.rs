@@ -23,8 +23,16 @@ const INITIAL_BALL_SPEED: f32 = 5.0;
 const INITIAL_HEARTS: usize = 3;
 const DIFFICULTY_INCREASE_INTERVAL: usize = 5;
 const POWERUP_SPAWN_CHANCE: f32 = 0.01;
+const POWERUP_DURATION: Duration = Duration::from_secs(10);
 
-// Power-up types
+// Audio paths
+const AUDIO_PATH_GAME_BOUNCE: &str = "docs/assets/audio/game_bounce.wav";
+const AUDIO_PATH_GAME_HEART: &str = "docs/assets/audio/game_heart.wav";
+const AUDIO_PATH_GAME_START: &str = "docs/assets/audio/game_start.wav";
+const AUDIO_PATH_GAME_OVER: &str = "docs/assets/audio/game_over.wav";
+const AUDIO_PATH_GAME_TUNE: &str = "docs/assets/audio/game_tune.wav";
+const AUDIO_PATH_GAME_POWERUP: &str = "docs/assets/audio/game_powerup.wav";
+
 #[derive(Clone, Copy, PartialEq)]
 enum PowerUpType {
     WidthIncrease,
@@ -149,16 +157,8 @@ pub struct Game {
     pub background_music: Option<audio::Source>,
 }
 
-// THESE WILL HAVE CHECKBOXES AND HUD TXT TO OFFER OPTIONS TO PLAY OR NAH
-const AUDIO_PATH_GAME_BOUNCE: &str = "docs/assets/audio/game_bounce.wav"; // plays when ball hits the paddle 
-const AUDIO_PATH_GAME_HEART: &str = "docs/assets/audio/game_heart.wav"; // plays when you earn a heart after hitting a high score(last round's score before u dropped the ball and retried + incremental milestone x10(every 10th+5 milestone))
-const AUDIO_PATH_GAME_START: &str = "docs/assets/audio/game_start.wav"; // plays when at initial game start & when u press retry
-const AUDIO_PATH_GAME_OVER: &str = "docs/assets/audio/game_over.wav"; // plays when you run out of hearts
-const AUDIO_PATH_GAME_TUNE: &str = "docs/assets/audio/game_tune.wav"; // Soon i will make use of this, make some checkbox in the corner to enable/disable game background tune that loops while playing
-
 impl Game {
     pub fn new(ctx: &mut Context) -> GameResult<Self> {
-        // Load all sound effects
         let hit_sound = audio::Source::new(ctx, AUDIO_PATH_GAME_BOUNCE).ok();
         let powerup_sound = audio::Source::new(ctx, AUDIO_PATH_GAME_POWERUP).ok();
         let heart_sound = audio::Source::new(ctx, AUDIO_PATH_GAME_HEART).ok();
@@ -166,7 +166,6 @@ impl Game {
         let game_over_sound = audio::Source::new(ctx, AUDIO_PATH_GAME_OVER).ok();
         let mut background_music = audio::Source::new(ctx, AUDIO_PATH_GAME_TUNE).ok();
 
-        // Set background music to loop
         if let Some(music) = &mut background_music {
             music.set_repeat(true);
         }
@@ -196,31 +195,43 @@ impl Game {
             background_music,
         };
 
-        // Play start sound
         if let Some(sound) = &mut game.start_sound {
             let _ = sound.play_detached(ctx);
         }
 
-        // Start background music
         if let Some(music) = &mut game.background_music {
             let _ = music.play_detached(ctx);
         }
 
-        game.add_animation(
+        game.add_start_animation();
+        Ok(game)
+    }
+
+    fn add_start_animation(&mut self) {
+        self.animations.push(AnimatedText::new(
             "Get Ready!".to_string(),
             [WIDTH / 2.0, HEIGHT / 2.0],
             2,
             72.0,
             Color::CYAN,
             [0.0, 0.0],
-        );
-
-        Ok(game)
+        ));
     }
 
     fn apply_power_up(&mut self, power_up: &PowerUp, ctx: &Context) {
         match power_up.power_type {
-            // Previous power-up implementations...
+            PowerUpType::WidthIncrease => {
+                self.bar.width *= 1.5;
+            }
+            PowerUpType::SpeedBoost => {
+                self.bar.speed *= 1.5;
+            }
+            PowerUpType::ExtraHeart => {
+                self.hearts += 1;
+            }
+            PowerUpType::SlowBall => {
+                self.ball.speed_multiplier *= 0.75;
+            }
         }
 
         if let Some(sound) = &mut self.powerup_sound {
@@ -228,8 +239,38 @@ impl Game {
         }
     }
 
+    fn spawn_power_up(&mut self) {
+        let mut rng = rand::thread_rng();
+        if rng.gen::<f32>() < POWERUP_SPAWN_CHANCE {
+            let power_type = match rng.gen_range(0..4) {
+                0 => PowerUpType::WidthIncrease,
+                1 => PowerUpType::SpeedBoost,
+                2 => PowerUpType::ExtraHeart,
+                _ => PowerUpType::SlowBall,
+            };
+
+            self.power_ups.push(PowerUp::new(
+                rng.gen_range(0.0..WIDTH - 30.0),
+                rng.gen_range(0.0..HEIGHT / 2.0),
+                power_type,
+            ));
+        }
+    }
+
     pub fn reset(&mut self, ctx: &Context) {
-        // Previous reset implementation...
+        self.ball = Ball::new();
+        self.bar = Bar::new();
+        self.score = 0;
+        self.hearts = INITIAL_HEARTS;
+        self.state = GameState::Countdown;
+        self.countdown_start = Some(Instant::now());
+        self.countdown_value = 3;
+        self.animations.clear();
+        self.power_ups.clear();
+        self.combo_count = 0;
+        self.difficulty_level = 1;
+
+        self.add_start_animation();
 
         if let Some(sound) = &mut self.start_sound {
             let _ = sound.play_detached(ctx);
@@ -238,34 +279,85 @@ impl Game {
 
     pub fn check_high_score(&mut self, ctx: &Context) {
         if self.score > self.high_score {
-            // Previous high score implementation...
+            self.high_score = self.score;
+            self.animations.push(AnimatedText::new(
+                "New High Score!".to_string(),
+                [WIDTH / 2.0, HEIGHT / 2.0 - 100.0],
+                2,
+                48.0,
+                Color::YELLOW,
+                [0.0, -1.0],
+            ));
 
             if !self.first_start && self.score > self.prev_high_score + 5 {
                 self.hearts += 1;
                 if let Some(sound) = &mut self.heart_sound {
                     let _ = sound.play_detached(ctx);
                 }
-                // Rest of the implementation...
+                self.animations.push(AnimatedText::new(
+                    "+1 Heart!".to_string(),
+                    [WIDTH / 2.0, HEIGHT / 2.0],
+                    2,
+                    48.0,
+                    Color::GREEN,
+                    [0.0, -1.0],
+                ));
             }
         }
     }
 
+    fn handle_bar_movement(&mut self, ctx: &Context) {
+        let keyboard = ctx.keyboard;
+        
+        if keyboard.is_key_pressed(KeyCode::Left) || keyboard.is_key_pressed(KeyCode::A) {
+            self.bar.move_left();
+        }
+        if keyboard.is_key_pressed(KeyCode::Right) || keyboard.is_key_pressed(KeyCode::D) {
+            self.bar.move_right();
+        }
+    }
+
     pub fn handle_ball_collisions(&mut self, ctx: &Context) {
-        // Ball-wall collision remains the same...
+        // Ball-wall collisions
+        if self.ball.x <= 0.0 || self.ball.x + BALL_SIZE >= WIDTH {
+            self.ball.dx = -self.ball.dx;
+        }
+        if self.ball.y <= 0.0 {
+            self.ball.dy = -self.ball.dy;
+        }
 
         // Ball-bar collision
         if self.ball.y + BALL_SIZE >= self.bar.y
             && self.ball.x + BALL_SIZE >= self.bar.x
             && self.ball.x <= self.bar.x + self.bar.width
+            && self.ball.dy > 0.0
         {
-            // Previous collision handling...
+            self.ball.dy = -self.ball.dy;
+            self.score += 1;
+            
+            // Update combo
+            let hit_time = Instant::now();
+            if hit_time.duration_since(self.last_hit_time) < Duration::from_secs(2) {
+                self.combo_count += 1;
+            } else {
+                self.combo_count = 1;
+            }
+            self.last_hit_time = hit_time;
 
+            // Play sound
             if let Some(sound) = &mut self.hit_sound {
                 let _ = sound.play_detached(ctx);
             }
 
             self.check_high_score(ctx);
             self.spawn_power_up();
+
+            // Increase difficulty
+            if self.score % DIFFICULTY_INCREASE_INTERVAL == 0 {
+                self.difficulty_level += 1;
+                self.ball.speed_multiplier *= 1.1;
+                self.bar.speed *= 1.05;
+            }
         }
 
         // Ball falls off screen
@@ -276,12 +368,46 @@ impl Game {
                 if let Some(sound) = &mut self.game_over_sound {
                     let _ = sound.play_detached(ctx);
                 }
-                // Rest of game over implementation...
+                self.state = GameState::GameOver;
+                self.animations.push(AnimatedText::new(
+                    "Game Over!".to_string(),
+                    [WIDTH / 2.0, HEIGHT / 2.0 - 50.0],
+                    999,
+                    72.0,
+                    Color::RED,
+                    [0.0, 0.0],
+                ));
+                self.animations.push(AnimatedText::new(
+                    "Press 'R' to retry".to_string(),
+                    [WIDTH / 2.0, HEIGHT / 2.0 + 50.0],
+                    999,
+                    36.0,
+                    Color::WHITE,
+                    [0.0, 0.0],
+                ));
+            } else {
+                self.ball = Ball::new();
+                self.combo_count = 0;
             }
-            // Rest of implementation...
         }
+
+        // Power-up collisions
+        self.power_ups.retain_mut(|power_up| {
+            let collided = self.ball.x < power_up.x + power_up.size
+                && self.ball.x + BALL_SIZE > power_up.x
+                && self.ball.y < power_up.y + power_up.size
+                && self.ball.y + BALL_SIZE > power_up.y;
+
+            if collided {
+                self.apply_power_up(power_up, ctx);
+                power_up.active_until = Some(Instant::now() + POWERUP_DURATION);
+            }
+
+            power_up.is_active()
+        });
     }
-}
+} 
+
 
 impl EventHandler for Game {
     fn update(&mut self, ctx: &mut Context) -> GameResult<()> {
@@ -301,33 +427,33 @@ impl EventHandler for Game {
                         self.countdown_start = Some(Instant::now());
                         if self.countdown_value > 0 {
                             self.animations.clear();
-                            self.add_animation(
+                            self.animations.push(AnimatedText::new(
                                 format!("{}", self.countdown_value),
                                 [WIDTH / 2.0, HEIGHT / 2.0 - 100.0],
                                 1,
                                 96.0,
                                 Color::CYAN,
                                 [0.0, 0.0],
-                            );
+                            ));
                         } else {
                             self.state = GameState::Playing;
                             self.animations.clear();
-                            self.add_animation(
+                            self.animations.push(AnimatedText::new(
                                 "Game Start!".to_string(),
                                 [WIDTH / 2.0, HEIGHT / 2.0 - 50.0],
                                 2,
                                 72.0,
                                 Color::GREEN,
                                 [0.0, -1.0],
-                            );
-                            self.add_animation(
+                            ));
+                            self.animations.push(AnimatedText::new(
                                 "Press 'P' or SPACE to pause".to_string(),
                                 [WIDTH / 2.0, HEIGHT / 2.0 + 50.0],
                                 3,
                                 24.0,
                                 Color::WHITE,
                                 [0.0, 0.0],
-                            );
+                            ));
                         }
                     }
                 }
@@ -335,7 +461,7 @@ impl EventHandler for Game {
             }
             GameState::Playing => {
                 self.ball.update();
-                self.handle_ball_collisions();
+                self.handle_ball_collisions(ctx);
                 self.handle_bar_movement(ctx);
             }
         }
@@ -453,14 +579,14 @@ impl EventHandler for Game {
             Some(KeyCode::P) | Some(KeyCode::Space) => {
                 if self.state == GameState::Playing {
                     self.state = GameState::Paused;
-                    self.add_animation(
+                    self.animations.push(AnimatedText::new(
                         "PAUSED".to_string(),
                         [WIDTH / 2.0, HEIGHT / 2.0],
                         999,
                         72.0,
                         Color::CYAN,
                         [0.0, 0.0],
-                    );
+                    ));
                 } else if self.state == GameState::Paused {
                     self.state = GameState::Playing;
                     self.animations.clear();
@@ -473,11 +599,11 @@ impl EventHandler for Game {
                 } else {
                     WindowMode::default().fullscreen_type(ggez::conf::FullscreenType::Windowed)
                 };
-                ctx.gfx.set_mode(mode).expect("Failed to toggle fullscreen");
+                ctx.gfx.set_mode(mode)?;
             }
             Some(KeyCode::R) if self.state == GameState::GameOver => {
                 self.prev_high_score = self.high_score;
-                self.reset();
+                self.reset(ctx);
             }
             _ => {}
         }
@@ -534,8 +660,7 @@ impl Bar {
     }
 }
 
-pub fn create_game_ctx() -> Result<(Context, ggez::event::EventLoop<()>), Box<dyn std::error::Error>>
-{
+pub fn create_game_ctx() -> Result<(Context, ggez::event::EventLoop<()>), Box<dyn std::error::Error>> {
     let mode = Conf::new().window_mode(WindowMode::default().dimensions(WIDTH, HEIGHT));
     let (ctx, event_loop) = ContextBuilder::new("bounce_shield", "🏐")
         .default_conf(mode)
