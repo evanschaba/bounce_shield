@@ -9,4 +9,4 @@ path = "lib/lib.rs"
 
 [dependencies]
 rand = "0.8.5"
-ggez = { version = "0.9.3", default-features = false }
+ggez = { version = "0.9.3", default-features = false, features = ["audio"] }

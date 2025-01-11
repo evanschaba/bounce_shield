@@ -1,0 +1,64 @@
+    Checking bounce_shield v1.0.0 (/Users/deltd3v/Desktop/workspaces/bounce_shield)
+    Checking bounce_shield v1.0.0 (/Users/deltd3v/Desktop/workspaces/bounce_shield)
+error[E0432]: unresolved imports `ggez::audio`, `ggez::audio`
+   --> lib/game.rs:1:11
+    |
+1   | use ggez::audio::{self, SoundSource};
+    |           ^^^^^   ^^^^ no `audio` in the root
+    |           |
+    |           could not find `audio` in `ggez`
+    |
+note: found an item that was configured out
+   --> /Users/deltd3v/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ggez-0.9.3/src/lib.rs:197:9
+    |
+197 | pub mod audio;
+    |         ^^^^^
+note: the item is gated behind the `audio` feature
+   --> /Users/deltd3v/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ggez-0.9.3/src/audio.rs:6:8
+    |
+6   | #![cfg(feature = "audio")]
+    |        ^^^^^^^^^^^^^^^^^
+note: found an item that was configured out
+   --> /Users/deltd3v/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ggez-0.9.3/src/lib.rs:197:9
+    |
+197 | pub mod audio;
+    |         ^^^^^
+note: the item is gated behind the `audio` feature
+   --> /Users/deltd3v/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ggez-0.9.3/src/audio.rs:6:8
+    |
+6   | #![cfg(feature = "audio")]
+    |        ^^^^^^^^^^^^^^^^^
+
+error[E0432]: unresolved imports `ggez::audio`, `ggez::audio`
+   --> lib/game.rs:1:11
+    |
+1   | use ggez::audio::{self, SoundSource};
+    |           ^^^^^   ^^^^ no `audio` in the root
+    |           |
+    |           could not find `audio` in `ggez`
+    |
+note: found an item that was configured out
+   --> /Users/deltd3v/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ggez-0.9.3/src/lib.rs:197:9
+    |
+197 | pub mod audio;
+    |         ^^^^^
+note: the item is gated behind the `audio` feature
+   --> /Users/deltd3v/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ggez-0.9.3/src/audio.rs:6:8
+    |
+6   | #![cfg(feature = "audio")]
+    |        ^^^^^^^^^^^^^^^^^
+note: found an item that was configured out
+   --> /Users/deltd3v/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ggez-0.9.3/src/lib.rs:197:9
+    |
+197 | pub mod audio;
+    |         ^^^^^
+note: the item is gated behind the `audio` feature
+   --> /Users/deltd3v/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ggez-0.9.3/src/audio.rs:6:8
+    |
+6   | #![cfg(feature = "audio")]
+    |        ^^^^^^^^^^^^^^^^^
+
+For more information about this error, try `rustc --explain E0432`.
+For more information about this error, try `rustc --explain E0432`.
+error: could not compile `bounce_shield` (lib) due to 1 previous error
+error: could not compile `bounce_shield` (lib) due to 1 previous error

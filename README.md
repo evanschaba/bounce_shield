@@ -4,7 +4,7 @@
 
 [**Game Details**](docs/game-details.md)
 
-#### ⚙️ (wip) changing macroquad thin game engine to bevy
+#### ⚙️  (wip) changing macroquad thin game engine to bevy
 
 ## Problem Decomposition
 
