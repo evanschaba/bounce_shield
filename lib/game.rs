@@ -94,6 +94,16 @@ pub struct AnimatedText {
     pub velocity: [f32; 2],
 }
 
+pub fn create_game_ctx() -> Result<(Context, ggez::event::EventLoop<()>), Box<dyn std::error::Error>>
+{
+    let mode = Conf::new().window_mode(WindowMode::default().dimensions(WIDTH, HEIGHT));
+    let (ctx, event_loop) = ContextBuilder::new("bounce_shield", "🏐")
+        .default_conf(mode)
+        .add_resource_path("docs/assets/audio")
+        .build()?;
+    Ok((ctx, event_loop))
+}
+
 impl AnimatedText {
     pub fn new(
         text: String,
@@ -612,6 +622,12 @@ impl EventHandler for Game {
     }
 }
 
+impl Default for Ball {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Ball {
     pub fn new() -> Self {
         let mut rng = rand::thread_rng();
@@ -632,6 +648,12 @@ impl Ball {
     pub fn update(&mut self) {
         self.x += self.dx * self.speed_multiplier;
         self.y += self.dy * self.speed_multiplier;
+    }
+}
+
+impl Default for Bar {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -659,14 +681,4 @@ impl Bar {
             self.x = WIDTH - self.width;
         }
     }
-}
-
-pub fn create_game_ctx() -> Result<(Context, ggez::event::EventLoop<()>), Box<dyn std::error::Error>>
-{
-    let mode = Conf::new().window_mode(WindowMode::default().dimensions(WIDTH, HEIGHT));
-    let (ctx, event_loop) = ContextBuilder::new("bounce_shield", "🏐")
-        .default_conf(mode)
-        .add_resource_path("docs/assets/audio")
-        .build()?;
-    Ok((ctx, event_loop))
 }
